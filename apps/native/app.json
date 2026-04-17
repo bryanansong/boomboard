@@ -1,0 +1,17 @@
+{
+  "expo": {
+    "scheme": "boomboard",
+    "userInterfaceStyle": "automatic",
+    "orientation": "default",
+    "web": {
+      "bundler": "metro"
+    },
+    "name": "boomboard",
+    "slug": "boomboard",
+    "plugins": ["expo-font"],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
+}

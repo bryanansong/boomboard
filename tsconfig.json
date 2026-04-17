@@ -1,0 +1,3 @@
+{
+  "extends": "@boomboard/config/tsconfig.base.json"
+}
