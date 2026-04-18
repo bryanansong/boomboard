@@ -8,10 +8,24 @@
     },
     "name": "boomboard",
     "slug": "boomboard",
-    "plugins": ["expo-font"],
+    "plugins": [
+      "expo-font",
+      "@react-native-community/datetimepicker"
+    ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "26e456f4-4db8-4750-a072-d5d62a85ff24"
+      }
+    },
+    "android": {
+      "package": "com.bryanansong.boomboard"
+    },
+    "ios": {
+      "bundleIdentifier": "com.bryanansong.boomboard"
     }
   }
 }
