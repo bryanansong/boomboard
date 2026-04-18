@@ -60,11 +60,11 @@ export default function SignInScreen() {
     try {
       setIsGoogleLoading(true);
 
-      // Redirect back to this screen after OAuth completes. Using the current
-      // route (10-sign-in) ensures Expo Router lands on a valid page. The
-      // Stack.Protected guards in _layout will automatically move the user to
-      // the correct screen once isSignedIn becomes true.
-      const redirectUrl = Linking.createURL("(onboarding)/10-sign-in");
+      // Redirect back to this screen after OAuth completes. Path must match
+      // this file’s route (06-sign-in) so the deep link opens a real screen and
+      // the auth session can complete. Update Clerk Dashboard allowed redirect
+      // URLs if you change this path.
+      const redirectUrl = Linking.createURL("(onboarding)/06-sign-in");
 
       const result = await startSSOFlow({
         strategy: "oauth_google",
