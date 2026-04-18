@@ -1,0 +1,26 @@
+diff --git a/android/build.gradle b/android/build.gradle
+index fade58b22d5a730a4013d61599c21b475ec9907c..3500f508d68941010a88935285b5587b04df7ea3 100644
+--- a/android/build.gradle
++++ b/android/build.gradle
+@@ -297,14 +297,17 @@ def generatePCHTask = tasks.register("generatePCH") {
+           continue
+         }
+ 
+-        def tokenizer = new org.apache.commons.text.StringTokenizer(commandObj.command, " ")
+-        def tokens = tokenizer.tokenList
+-
+         def workingDirFile = new File(commandObj.directory)
+ 
+         providers.exec {
+           workingDir(providers.provider { workingDirFile }.get())
+-          commandLine(tokens)
++          // StringTokenizer splits on spaces and breaks CMake's quoted -I flags when the project path contains spaces.
++          def isWindows = System.getProperty("os.name").toLowerCase().contains("windows")
++          if (isWindows) {
++            commandLine("cmd", "/c", commandObj.command)
++          } else {
++            commandLine("sh", "-c", commandObj.command)
++          }
+         }.getResult().get().assertNormalExitValue()
+       }
+     }

@@ -121,6 +121,9 @@
       },
     },
   },
+  "patchedDependencies": {
+    "expo-modules-core@55.0.22": "patches/expo-modules-core@55.0.22.patch",
+  },
   "catalog": {
     "convex": "^1.33.1",
     "dotenv": "^17.2.2",
