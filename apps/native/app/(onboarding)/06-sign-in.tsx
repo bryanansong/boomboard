@@ -12,19 +12,24 @@ import { withUniwind } from "uniwind";
 
 const StyledIonicons = withUniwind(Ionicons);
 
-/** Type guard for Clerk API errors */
-interface ClerkError {
-  clerkError: boolean;
-  errors: Array<{ code: string; message: string }>;
-}
-
-function isClerkError(err: unknown): err is ClerkError {
-  return (
-    typeof err === "object" &&
-    err !== null &&
-    "clerkError" in err &&
-    (err as ClerkError).clerkError === true
-  );
+function isAlreadySignedInClerkError(err: unknown): boolean {
+  if (typeof err === "object" && err !== null && "errors" in err) {
+    const errors = (err as { errors?: Array<{ code?: string; message?: string }> }).errors;
+    if (Array.isArray(errors)) {
+      return errors.some(
+        (e) =>
+          e.code === "session_exists" ||
+          /already signed in/i.test(e.message ?? ""),
+      );
+    }
+  }
+  const msg =
+    err instanceof Error
+      ? err.message
+      : typeof err === "string"
+        ? err
+        : String(err);
+  return /already signed in/i.test(msg);
 }
 
 // Preloads the browser for Android devices to reduce authentication load time
@@ -42,28 +47,31 @@ WebBrowser.maybeCompleteAuthSession();
 
 export default function SignInScreen() {
   useWarmUpBrowser();
-  const { startSSOFlow } = useSSO();
   const { isSignedIn } = useAuth();
+  const { startSSOFlow } = useSSO();
   const { toast } = useToast();
-  const { next } = useOnboarding();
+  const { completeOnboarding } = useOnboarding();
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const { medium: hapticMedium } = useHaptic();
 
   const onGooglePress = useCallback(async () => {
     hapticMedium();
-    // If already signed in (e.g. from a previous session), skip OAuth entirely
+
     if (isSignedIn) {
-      next();
+      try {
+        setIsGoogleLoading(true);
+        await completeOnboarding();
+      } finally {
+        setIsGoogleLoading(false);
+      }
       return;
     }
 
     try {
       setIsGoogleLoading(true);
 
-      // Redirect back to this screen after OAuth completes. Path must match
-      // this file’s route (06-sign-in) so the deep link opens a real screen and
-      // the auth session can complete. Update Clerk Dashboard allowed redirect
-      // URLs if you change this path.
+      // Same SSO pattern as (auth)/sign-in. Deep link must open this route while
+      // onboarding is incomplete (the (auth) group is not mounted then).
       const redirectUrl = Linking.createURL("(onboarding)/06-sign-in");
 
       const result = await startSSOFlow({
@@ -73,8 +81,9 @@ export default function SignInScreen() {
 
       if (result.createdSessionId) {
         await result.setActive!({ session: result.createdSessionId });
-        // Proceed to next onboarding screen (e.g. paywall)
-        next();
+        // This is the last onboarding screen; `next()` is a no-op here. Finish
+        // onboarding and let the root Stack.Protected guards route to the app.
+        await completeOnboarding();
       } else if (result.authSessionResult?.type === "dismiss") {
         // User dismissed the browser — this is a genuine cancellation
         toast.show({
@@ -92,13 +101,10 @@ export default function SignInScreen() {
         });
       }
     } catch (err) {
-      // If Clerk says a session already exists, the user IS signed in — just proceed
-      if (isClerkError(err) && err.errors.some((e) => e.code === "session_exists")) {
-        console.log("Session already exists, proceeding to next screen.");
-        next();
+      if (isAlreadySignedInClerkError(err)) {
+        await completeOnboarding();
         return;
       }
-
       console.error("[Onboarding] OAuth error:", err);
       toast.show({
         label: "Sign In Failed",
@@ -109,7 +115,7 @@ export default function SignInScreen() {
     } finally {
       setIsGoogleLoading(false);
     }
-  }, [startSSOFlow, isSignedIn, toast, next, hapticMedium]);
+  }, [isSignedIn, startSSOFlow, toast, completeOnboarding, hapticMedium]);
 
   return (
     <SafeAreaView className="flex-1 bg-background px-8">
@@ -133,23 +139,6 @@ export default function SignInScreen() {
         <View className="gap-3 mt-2">
           <PressableFeedback 
             className="w-full h-14 bg-background-secondary rounded-full flex-row items-center justify-center gap-3 border border-border"
-            onPress={() => {
-              hapticMedium();
-              toast.show({
-                label: "Not Configured",
-                description: "Apple Auth is not set up.",
-                variant: "warning",
-              })
-            }}
-          >
-            <StyledIonicons name="logo-apple" size={25} className="text-foreground -mt-[2px]" />
-            <Text className="text-foreground font-semibold text-[17px]">
-              Continue With Apple
-            </Text>
-          </PressableFeedback>
-          
-          <PressableFeedback 
-            className="w-full h-14 bg-background-secondary rounded-full flex-row items-center justify-center gap-3 border border-border"
             onPress={onGooglePress}
             isDisabled={isGoogleLoading}
           >
@@ -161,7 +150,9 @@ export default function SignInScreen() {
 
           {__DEV__ && (
             <Button
-              onPress={next}
+              onPress={() => {
+                void completeOnboarding();
+              }}
               variant="outline"
               size="lg"
             >
