@@ -1,45 +1,102 @@
 import "@/global.css";
+import { ClerkProvider, useAuth } from "@clerk/clerk-expo";
+import { tokenCache } from "@clerk/clerk-expo/token-cache";
 import { env } from "@boomboard/env/native";
-import { ClerkProvider, useAuth } from "@clerk/expo";
-import { tokenCache } from "@clerk/expo/token-cache";
-import { ConvexProvider, ConvexReactClient } from "convex/react";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
 import { Stack } from "expo-router";
+import { useQuickActionRouting } from "expo-quick-actions/router";
+import { StatusBar } from "expo-status-bar";
 import { HeroUINativeProvider } from "heroui-native";
+import { useEffect } from "react";
+import { ActivityIndicator, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 
-import { AppThemeProvider } from "@/contexts/app-theme-context";
+import { NavigationThemeProvider } from "@/components/navigation-theme-provider";
+import { convex } from "@/lib/convex/client";
+import { useAppTheme, usePostHogIdentify } from "@/lib/hooks";
+import { useOnboardingStore } from "@/lib/stores";
+import { setupQuickActions } from "@/lib/quick-actions";
+import { configureNotificationHandler, usePushNotificationSetup } from "@/lib/notifications";
+import { SuperwallDeepLinkHandler } from "@/lib/superwall/deep-link-handler";
+import { SuperwallProvider } from "expo-superwall";
+import { PostHogProvider } from 'posthog-react-native'
 
-export const unstable_settings = {
-  initialRouteName: "(drawer)",
-};
-
-const convex = new ConvexReactClient(env.EXPO_PUBLIC_CONVEX_URL, {
-  unsavedChangesWarning: false,
-});
+// Configure push notification handler at app startup
+configureNotificationHandler();
 
 function StackLayout() {
+  const { isLoaded, isSignedIn } = useAuth();
+
+  // Use Zustand stores directly for better performance
+  const isOnboardingComplete = useOnboardingStore((state) => state.isComplete);
+  const { isDark, initializeTheme } = useAppTheme();
+
+  // Auto-sync push notification token with Convex when authenticated
+  usePushNotificationSetup();
+
+  // Identify the current user in PostHog when auth state changes
+  usePostHogIdentify();
+
+  // Enable linking to the `href` param when a quick action is used
+  useQuickActionRouting();
+
+  // Setup quick actions on app load
+  useEffect(() => {
+    setupQuickActions();
+    initializeTheme();
+  }, [initializeTheme]);
+
+  // Show loading screen only while auth is initializing
+  if (!isLoaded) {
+    return (
+      <View className="flex-1 justify-center items-center bg-background">
+        <ActivityIndicator size="large" color="var(--accent)" />
+      </View>
+    );
+  }
+
   return (
-    <Stack screenOptions={{}}>
-      <Stack.Screen name="(drawer)" options={{ headerShown: false }} />
-      <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-      <Stack.Screen name="modal" options={{ title: "Modal", presentation: "modal" }} />
-    </Stack>
+    <>
+      <Stack screenOptions={{ headerShown: false }}>
+        {/* Auth Screen: Only accessible if NOT signed in AND onboarding IS complete */}
+        <Stack.Protected guard={!isSignedIn && isOnboardingComplete}>
+          <Stack.Screen name="(auth)" />
+        </Stack.Protected>
+
+        {/* Onboarding Screen: Only accessible if onboarding is NOT complete */}
+        <Stack.Protected guard={!isOnboardingComplete}>
+          <Stack.Screen name="(onboarding)" />
+        </Stack.Protected>
+
+        {/* Main App (Tabs): Only accessible if signed in AND onboarding complete */}
+        <Stack.Protected guard={isSignedIn && isOnboardingComplete}>
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen
+            name="(modals)"
+            options={{ headerShown: false, presentation: "modal" }}
+          />
+        </Stack.Protected>
+      </Stack>
+      <StatusBar style={isDark ? "light" : "dark"} />
+    </>
   );
 }
 
 export default function Layout() {
   return (
-    <ClerkProvider tokenCache={tokenCache} publishableKey={env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY}>
+    <ClerkProvider
+      tokenCache={tokenCache}
+      publishableKey={env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY}
+    >
       <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
         <GestureHandlerRootView style={{ flex: 1 }}>
           <KeyboardProvider>
-            <AppThemeProvider>
-              <HeroUINativeProvider>
+            <HeroUINativeProvider config={{ devInfo: { stylingPrinciples: false } }}>
+              <NavigationThemeProvider>
                 <StackLayout />
-              </HeroUINativeProvider>
-            </AppThemeProvider>
+              </NavigationThemeProvider>
+            </HeroUINativeProvider>
           </KeyboardProvider>
         </GestureHandlerRootView>
       </ConvexProviderWithClerk>
