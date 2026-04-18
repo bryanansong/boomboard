@@ -1,9 +1,7 @@
 import { useClerk, useUser } from "@clerk/clerk-expo";
 import { env } from "@boomboard/env/native";
-import Constants from "expo-constants";
 import { router } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
-import * as StoreReview from "expo-store-review";
 import { useCallback, useMemo } from "react";
 import { Text, View, TouchableOpacity } from "react-native";
 import { useCSSVariable } from "uniwind";
@@ -14,7 +12,6 @@ import {
   CreditCard,
   Lightbulb,
   TriangleAlert,
-  Star,
   FileText,
   Shield,
   RefreshCcw,
@@ -214,17 +211,6 @@ export default function SettingsModal() {
     showBugReportMailPicker(user?.id, user?.emailAddresses?.[0]?.emailAddress);
   }, [user]);
 
-  // Handle rate app
-  const handleRateApp = useCallback(async () => {
-    try {
-      if (await StoreReview.hasAction()) {
-        await StoreReview.requestReview();
-      }
-    } catch (error) {
-      console.error("Rate app error:", error);
-    }
-  }, []);
-
   // Handle terms of service
   const handleTermsOfService = useCallback(async () => {
     try {
@@ -303,17 +289,6 @@ export default function SettingsModal() {
             onPress: handleReportBug,
             color: "orange",
           },
-          {
-            id: "rate-app",
-            icon: Star,
-            label: `Rate ${(() => {
-              const s = Constants.expoConfig?.name;
-              const name = Array.isArray(s) ? s[0] : s;
-              return name ? name.charAt(0).toUpperCase() + name.slice(1) : "Us";
-            })()} in the App Store`,
-            onPress: handleRateApp,
-            color: "sky",
-          },
         ],
       },
       {
@@ -364,7 +339,6 @@ export default function SettingsModal() {
       handleManageSubscriptions,
       handleRequestFeature,
       handleReportBug,
-      handleRateApp,
       handleTermsOfService,
       handlePrivacyPolicy,
     ]
