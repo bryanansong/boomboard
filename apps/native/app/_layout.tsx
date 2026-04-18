@@ -18,8 +18,6 @@ import { useAppTheme } from "@/lib/hooks";
 import { useOnboardingStore } from "@/lib/stores";
 import { setupQuickActions } from "@/lib/quick-actions";
 import { configureNotificationHandler, usePushNotificationSetup } from "@/lib/notifications";
-import { SuperwallDeepLinkHandler } from "@/lib/superwall/deep-link-handler";
-import { SuperwallProvider } from "expo-superwall";
 
 // Configure push notification handler at app startup
 configureNotificationHandler();

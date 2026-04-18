@@ -26,7 +26,6 @@ const ONBOARDING_SCREENS: SelectOption[] = [
 	{ value: "09-signature", label: "09 Signature" },
 	{ value: "10-sign-in", label: "10 Sign In" },
 	{ value: "11-membership-gift", label: "11 Membership Gift" },
-	{ value: "12-paywall", label: "12 Paywall" },
 ];
 
 function DevScreenSelector() {
@@ -82,9 +81,8 @@ export default function OnboardingLayout() {
 				<Stack.Screen name="08-connect-permission" />
 				<Stack.Screen name="09-signature" />
 				<Stack.Screen name="10-sign-in" />
-				<Stack.Screen name="11-membership-gift" />
-				<Stack.Screen name="12-paywall" />
-			</Stack>
+<Stack.Screen name="11-membership-gift" />
+		</Stack>
 			<DevScreenSelector />
 		</View>
 	);

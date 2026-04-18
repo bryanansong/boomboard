@@ -35,7 +35,6 @@ export const ONBOARDING_SCREENS = [
 	{ id: 9, name: "Signature", route: "09-signature" },
 	{ id: 10, name: "Sign In", route: "10-sign-in" },
 	{ id: 11, name: "Membership Gift", route: "11-membership-gift" },
-	{ id: 12, name: "Paywall", route: "12-paywall" },
 ] as const;
 
 export type OnboardingScreenMeta = (typeof ONBOARDING_SCREENS)[number];
