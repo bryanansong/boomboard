@@ -1,248 +1,163 @@
-import { useSignIn } from "@clerk/expo";
-import { type Href, Link, useRouter } from "expo-router";
-import React from "react";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { useSSO } from "@clerk/clerk-expo";
+import * as Linking from "expo-linking";
+import * as WebBrowser from "expo-web-browser";
+import { Button, useToast } from "heroui-native";
+import { router } from "expo-router";
+import React, { useCallback, useEffect, useState } from "react";
+import { usePostHog } from "posthog-react-native";
+import { Platform, Text, View } from "react-native";
+import { storage } from "@/lib/storage";
 
-function pushDecoratedUrl(
-  router: ReturnType<typeof useRouter>,
-  decorateUrl: (url: string) => string,
-  href: string,
-) {
-  const url = decorateUrl(href);
-  const nextHref = url.startsWith("http") ? new URL(url).pathname : url;
-  router.push(nextHref as Href);
-}
+import { useOnboardingStore } from "@/lib/stores/onboarding-store";
 
-export default function Page() {
-  const { signIn, errors, fetchStatus } = useSignIn();
-  const router = useRouter();
-  const [emailAddress, setEmailAddress] = React.useState("");
-  const [password, setPassword] = React.useState("");
-  const [code, setCode] = React.useState("");
-  const [statusMessage, setStatusMessage] = React.useState<string | null>(null);
+/** Preloads the browser for Android devices to reduce authentication load time */
+export const useWarmUpBrowser = () => {
+  useEffect(() => {
+    if (Platform.OS !== "android") return;
+    void WebBrowser.warmUpAsync();
+    return () => {
+      void WebBrowser.coolDownAsync();
+    };
+  }, []);
+};
 
-  const emailCodeFactor = signIn.supportedSecondFactors.find(
-    (factor) => factor.strategy === "email_code",
-  );
-  const requiresEmailCode =
-    signIn.status === "needs_client_trust" ||
-    (signIn.status === "needs_second_factor" && !!emailCodeFactor);
+WebBrowser.maybeCompleteAuthSession();
 
-  const handleSubmit = async () => {
-    setStatusMessage(null);
+export default function SignInPage() {
+  useWarmUpBrowser();
+  const { startSSOFlow } = useSSO();
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
+  const posthog = usePostHog();
 
-    const { error } = await signIn.password({
-      emailAddress,
-      password,
-    });
+  const onPress = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      posthog.capture("auth:sign_in_attempted", { provider: "google" });
 
-    if (error) {
-      console.error(JSON.stringify(error, null, 2));
-      setStatusMessage(error.longMessage ?? "Unable to sign in. Please try again.");
+			// Redirect back to this screen after OAuth completes. Using the current
+			// route (sign-in) ensures Expo Router lands on a valid page. The
+			// Stack.Protected guards in _layout will automatically move the user to
+			// (tabs) once isSignedIn becomes true.
+			const redirectUrl = Linking.createURL("(auth)/sign-in");
+
+      const result = await startSSOFlow({
+        strategy: "oauth_google",
+        redirectUrl,
+      });
+
+      if (result.createdSessionId) {
+        await result.setActive!({ session: result.createdSessionId });
+        posthog.capture("auth:sign_in_success", { provider: "google" });
+        // AuthGuard will handle navigation automatically
+      } else if (result.authSessionResult?.type === "dismiss") {
+        // User dismissed the browser — this is a genuine cancellation
+        posthog.capture("auth:sign_in_failed", {
+          provider: "google",
+          reason: "cancelled",
+        });
+        toast.show({
+          label: "Sign In Cancelled",
+          description: "Please try again to continue.",
+          variant: "warning",
+          duration: 3000,
+        });
+      } else {
+        posthog.capture("auth:sign_in_failed", {
+          provider: "google",
+          reason: "no_session",
+        });
+        toast.show({
+          label: "Sign In Incomplete",
+          description: "Something went wrong. Please try again.",
+          variant: "warning",
+          duration: 3000,
+        });
+      }
+    } catch (err) {
+      console.error("[Auth] OAuth error:", err);
+      posthog.capture("auth:sign_in_failed", { 
+        provider: "google", 
+        reason: "error",
+        error_message: err instanceof Error ? err.message : String(err)
+      });
+      toast.show({
+        label: "Sign In Failed",
+        description: "Something went wrong. Please try again.",
+        variant: "danger",
+        duration: 3000,
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [startSSOFlow, toast, posthog]);
+
+  const handleClearStorage = useCallback(async () => {
+    if (!__DEV__) {
       return;
     }
 
-    if (signIn.status === "complete") {
-      await signIn.finalize({
-        navigate: ({ session, decorateUrl }) => {
-          if (session?.currentTask) {
-            console.log(session.currentTask);
-            return;
-          }
-
-          pushDecoratedUrl(router, decorateUrl, "/");
-        },
+    try {
+      storage.clearAll();
+      toast.show({
+        label: "Storage Cleared",
+        description: "MMKV storage has been cleared. Reload the app.",
+        variant: "success",
+        duration: 3000,
       });
-    } else if (signIn.status === "needs_second_factor" || signIn.status === "needs_client_trust") {
-      if (emailCodeFactor) {
-        await signIn.mfa.sendEmailCode();
-        setStatusMessage(`We sent a verification code to ${emailCodeFactor.safeIdentifier}.`);
-      } else {
-        console.error("Second factor is required, but email_code is not available:", signIn);
-        setStatusMessage(
-          "A second factor is required, but this screen only supports email codes right now.",
-        );
-      }
-    } else {
-      console.error("Sign-in attempt not complete:", signIn);
-      setStatusMessage("Sign-in could not be completed. Check the logs for more details.");
-    }
-  };
-
-  const handleVerify = async () => {
-    setStatusMessage(null);
-
-    await signIn.mfa.verifyEmailCode({ code });
-
-    if (signIn.status === "complete") {
-      await signIn.finalize({
-        navigate: ({ session, decorateUrl }) => {
-          if (session?.currentTask) {
-            console.log(session.currentTask);
-            return;
-          }
-
-          pushDecoratedUrl(router, decorateUrl, "/");
-        },
+    } catch (err) {
+      console.error("Error clearing storage:", err);
+      toast.show({
+        label: "Clear Failed",
+        description: "Failed to clear storage.",
+        variant: "danger",
+        duration: 3000,
       });
-    } else {
-      console.error("Sign-in attempt not complete:", signIn);
-      setStatusMessage("That code did not complete sign-in. Please try again.");
     }
-  };
-
-  if (requiresEmailCode) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.title}>Verify your account</Text>
-        {statusMessage && <Text style={styles.helper}>{statusMessage}</Text>}
-        <TextInput
-          style={styles.input}
-          value={code}
-          placeholder="Enter your verification code"
-          placeholderTextColor="#666666"
-          onChangeText={(value) => setCode(value)}
-          keyboardType="numeric"
-        />
-        {errors.fields.code && <Text style={styles.error}>{errors.fields.code.message}</Text>}
-        <Pressable
-          style={({ pressed }) => [
-            styles.button,
-            fetchStatus === "fetching" && styles.buttonDisabled,
-            pressed && styles.buttonPressed,
-          ]}
-          onPress={handleVerify}
-          disabled={fetchStatus === "fetching"}
-        >
-          <Text style={styles.buttonText}>Verify</Text>
-        </Pressable>
-        <Pressable
-          style={({ pressed }) => [styles.secondaryButton, pressed && styles.buttonPressed]}
-          onPress={() => signIn.mfa.sendEmailCode()}
-        >
-          <Text style={styles.secondaryButtonText}>I need a new code</Text>
-        </Pressable>
-      </View>
-    );
-  }
+  }, [toast]);
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Sign in</Text>
-      {statusMessage && <Text style={styles.helper}>{statusMessage}</Text>}
-      <Text style={styles.label}>Email address</Text>
-      <TextInput
-        style={styles.input}
-        autoCapitalize="none"
-        value={emailAddress}
-        placeholder="Enter email"
-        placeholderTextColor="#666666"
-        onChangeText={(value) => setEmailAddress(value)}
-        keyboardType="email-address"
-      />
-      {errors.fields.identifier && (
-        <Text style={styles.error}>{errors.fields.identifier.message}</Text>
-      )}
-      <Text style={styles.label}>Password</Text>
-      <TextInput
-        style={styles.input}
-        value={password}
-        placeholder="Enter password"
-        placeholderTextColor="#666666"
-        secureTextEntry={true}
-        onChangeText={(value) => setPassword(value)}
-      />
-      {errors.fields.password && <Text style={styles.error}>{errors.fields.password.message}</Text>}
-      <Pressable
-        style={({ pressed }) => [
-          styles.button,
-          (!emailAddress || !password || fetchStatus === "fetching") && styles.buttonDisabled,
-          pressed && styles.buttonPressed,
-        ]}
-        onPress={handleSubmit}
-        disabled={!emailAddress || !password || fetchStatus === "fetching"}
-      >
-        <Text style={styles.buttonText}>Sign in</Text>
-      </Pressable>
-      <View style={styles.linkContainer}>
-        <Text>Don't have an account? </Text>
-        <Link href="/sign-up">
-          <Text style={styles.linkText}>Sign up</Text>
-        </Link>
+    <View className="flex-1 bg-white justify-center p-6">
+      <View className="items-stretch">
+        <View className="mb-12 items-center">
+          <Text className="text-[28px] font-bold text-neutral-900 mb-2 text-center">
+            Welcome
+          </Text>
+          <Text className="text-base text-neutral-500 text-center leading-6">
+            Sign in to continue
+          </Text>
+        </View>
+
+        <View className="mt-2.5">
+          <Button onPress={onPress} isDisabled={isLoading}>
+            <Button.Label>
+              {isLoading ? "Signing in..." : "Continue with Google"}
+            </Button.Label>
+          </Button>
+        </View>
+
+        {__DEV__ && (
+          <>
+          <View className="mt-5">
+            <Button onPress={handleClearStorage} variant="tertiary">
+              <Button.Label>Clear MMKV Storage (Dev)</Button.Label>
+            </Button>
+          </View>
+          <View className="mt-2">
+            <Button
+              onPress={() => {
+                // Reset onboarding state and navigate to welcome screen
+                useOnboardingStore.getState().resetOnboarding();
+                router.replace("/(onboarding)/01-welcome" as never);
+              }}
+              variant="tertiary"
+            >
+              <Button.Label>Restart Onboarding</Button.Label>
+            </Button>
+          </View>
+          </>
+        )}
       </View>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    gap: 12,
-  },
-  title: {
-    marginBottom: 8,
-    fontSize: 24,
-    fontWeight: "700",
-  },
-  label: {
-    fontWeight: "600",
-    fontSize: 14,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    backgroundColor: "#fff",
-  },
-  button: {
-    backgroundColor: "#0a7ea4",
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-    alignItems: "center",
-    marginTop: 8,
-  },
-  buttonPressed: {
-    opacity: 0.7,
-  },
-  buttonDisabled: {
-    opacity: 0.5,
-  },
-  buttonText: {
-    color: "#fff",
-    fontWeight: "600",
-  },
-  secondaryButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-    alignItems: "center",
-    marginTop: 8,
-  },
-  secondaryButtonText: {
-    color: "#0a7ea4",
-    fontWeight: "600",
-  },
-  linkContainer: {
-    flexDirection: "row",
-    gap: 4,
-    marginTop: 12,
-    alignItems: "center",
-  },
-  linkText: {
-    color: "#0a7ea4",
-    fontWeight: "600",
-  },
-  error: {
-    color: "#d32f2f",
-    fontSize: 12,
-    marginTop: -8,
-  },
-  helper: {
-    color: "#555555",
-    fontSize: 13,
-  },
-});
