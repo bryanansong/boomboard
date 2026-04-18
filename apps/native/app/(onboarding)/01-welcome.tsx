@@ -47,7 +47,7 @@ export default function WelcomeScreen() {
           </View>
 
           <Text className="text-4xl font-bold text-foreground text-center mb-4 tracking-tight">
-            Welcome to Template
+            Welcome to Boomboard
           </Text>
 
           <Text className="text-lg text-muted-foreground text-center leading-relaxed max-w-[85%]">
