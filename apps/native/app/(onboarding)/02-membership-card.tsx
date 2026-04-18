@@ -30,10 +30,10 @@ export default function StepScreen() {
         {/* Header Copy */}
         <View className="items-center text-center">
           <Text className="mb-2 font-semibold text-3xl text-foreground text-center">
-            Let's craft a personalized plan
+            Tune Boomboard to you
           </Text>
           <Text className="text-lg text-center text-muted leading-tight">
-            You'll get an exclusive membership card at the end
+            A few quick questions help us shape your sound library experience
           </Text>
         </View>
 

@@ -66,10 +66,10 @@ export default function QuizCompleteScreen() {
 				{/* Header Titles */}
 				<View className="mt-8 items-center justify-center">
 					<Text className="text-center font-bold text-4xl tracking-tight text-foreground">
-						Thank you for{"\n"}trusting us
+						{"You're all set"}
 					</Text>
 					<Text className="mt-4 text-center text-lg text-muted font-medium">
-						Now let's personalize the app for you...
+						{"Next, we'll wrap up setup so your sounds are ready when you are."}
 					</Text>
 				</View>
 

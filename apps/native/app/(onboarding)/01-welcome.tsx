@@ -51,8 +51,9 @@ export default function WelcomeScreen() {
           </Text>
 
           <Text className="text-lg text-muted-foreground text-center leading-relaxed max-w-[85%]">
-            The perfect starting point for your next big idea. Built with
-            standard best practices.
+            Build a personal library of your favorite sounds—viral clips,
+            custom reactions, or crowd-pleasers—and play them the instant you
+            need them.
           </Text>
         </View>
 

@@ -32,71 +32,42 @@ function toQuestionSlug(text: string): string {
 const quizQuestions: QuizQuestion[] = [
 	{
 		id: 1,
-		question: "What is your gender?",
+		question: "Which best describes you?",
 		type: "choice",
-		options: ["Female", "Male", "Other"],
+		options: [
+			"Content creator or streamer",
+			"I host or go to parties and social events",
+			"I love memes and viral audio",
+			"I just want the perfect clip ready for any moment",
+		],
 	},
 	{
 		id: 2,
-		question: "How often do you typically view pornography?",
+		question: "What kinds of sounds do you want in your library?",
 		type: "choice",
 		options: [
-			"Less than once a week",
-			"More than once a day",
-			"Once a day",
-			"A few times a week",
+			"Viral clips and trending audio",
+			"Custom reactions I record myself",
+			"Crowd-pleasers and classics",
+			"A mix of everything",
 		],
 	},
 	{
 		id: 3,
-		question: "Where did you hear about us?",
+		question: "When do you most want one-tap sounds?",
 		type: "choice",
-		options: ["TikTok", "Google", "Instagram", "YouTube", "Reddit", "X", "Facebook", "Other"],
+		options: [
+			"While creating or going live",
+			"In person with friends",
+			"In chats or messages",
+			"Whenever the moment hits",
+		],
 	},
 	{
 		id: 4,
-		question:
-			"Have you noticed a shift towards more extreme or graphic material?",
+		question: "How did you hear about Boomboard?",
 		type: "choice",
-		options: ["No", "Yes"],
-	},
-	{
-		id: 5,
-		question: "At what age did you first come across explicit content?",
-		type: "choice",
-		options: ["13 to 16", "25 or older", "17 to 24", "12 or younger"],
-	},
-	{
-		id: 6,
-		question:
-			"Do you find it difficult to achieve sexual arousal without pornography or fantasy?",
-		type: "choice",
-		options: ["Occasionally", "Frequently", "Rarely or never"],
-	},
-	{
-		id: 7,
-		question:
-			"Do you use pornography as a way to cope with emotional discomfort or pain?",
-		type: "choice",
-		options: ["Rarely or never", "Occasionally", "Frequently"],
-	},
-	{
-		id: 8,
-		question: "Do you turn to pornography when feeling stressed?",
-		type: "choice",
-		options: ["Occasionally", "Rarely or never", "Frequently"],
-	},
-	{
-		id: 9,
-		question: "Do you watch pornography out of boredom?",
-		type: "choice",
-		options: ["Frequently", "Occasionally", "Rarely or never"],
-	},
-	{
-		id: 10,
-		question: "Have you ever spent money on accessing explicit content?",
-		type: "choice",
-		options: ["Yes", "No"],
+		options: ["TikTok", "Instagram", "YouTube", "Friend", "App Store search", "Other"],
 	},
 ];
 
