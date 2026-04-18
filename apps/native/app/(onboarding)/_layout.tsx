@@ -19,13 +19,8 @@ const ONBOARDING_SCREENS: SelectOption[] = [
 	{ value: "02-membership-card", label: "02 Membership Card" },
 	{ value: "03-quiz", label: "03 Quiz" },
 	{ value: "04-quiz-complete", label: "04 Quiz Complete" },
-	{ value: "05-processing", label: "05 Processing" },
-	{ value: "06-reality-gap", label: "06 Reality Gap" },
-	{ value: "07-request-rating", label: "07 Request Rating" },
-	{ value: "08-connect-permission", label: "08 Connect Permission" },
-	{ value: "09-signature", label: "09 Signature" },
-	{ value: "10-sign-in", label: "10 Sign In" },
-	{ value: "11-membership-gift", label: "11 Membership Gift" },
+	{ value: "05-connect-permission", label: "05 Connect Permission" },
+	{ value: "06-sign-in", label: "06 Sign In" },
 ];
 
 function DevScreenSelector() {
@@ -75,14 +70,9 @@ export default function OnboardingLayout() {
 				<Stack.Screen name="02-membership-card" />
 				<Stack.Screen name="03-quiz" />
 				<Stack.Screen name="04-quiz-complete" />
-				<Stack.Screen name="05-processing" />
-				<Stack.Screen name="06-reality-gap" />
-				<Stack.Screen name="07-request-rating" />
-				<Stack.Screen name="08-connect-permission" />
-				<Stack.Screen name="09-signature" />
-				<Stack.Screen name="10-sign-in" />
-<Stack.Screen name="11-membership-gift" />
-		</Stack>
+				<Stack.Screen name="05-connect-permission" />
+				<Stack.Screen name="06-sign-in" />
+			</Stack>
 			<DevScreenSelector />
 		</View>
 	);

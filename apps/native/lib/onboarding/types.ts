@@ -28,13 +28,8 @@ export const ONBOARDING_SCREENS = [
 	{ id: 2, name: "Membership Card", route: "02-membership-card" },
 	{ id: 3, name: "Quiz", route: "03-quiz" },
 	{ id: 4, name: "Quiz Complete", route: "04-quiz-complete" },
-	{ id: 5, name: "Processing", route: "05-processing" },
-	{ id: 6, name: "Reality Gap", route: "06-reality-gap" },
-	{ id: 7, name: "Request Rating", route: "07-request-rating" },
-	{ id: 8, name: "Connect Permission", route: "08-connect-permission" },
-	{ id: 9, name: "Signature", route: "09-signature" },
-	{ id: 10, name: "Sign In", route: "10-sign-in" },
-	{ id: 11, name: "Membership Gift", route: "11-membership-gift" },
+	{ id: 5, name: "Connect Permission", route: "05-connect-permission" },
+	{ id: 6, name: "Sign In", route: "06-sign-in" },
 ] as const;
 
 export type OnboardingScreenMeta = (typeof ONBOARDING_SCREENS)[number];
