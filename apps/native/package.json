@@ -46,7 +46,6 @@
     "expo-linking": "^55.0.13",
     "expo-localization": "^55.0.13",
     "expo-network": "^55.0.13",
-    "expo-notifications": "^55.0.19",
     "expo-quick-actions": "^6.0.1",
     "expo-router": "^55.0.12",
     "expo-secure-store": "^55.0.13",

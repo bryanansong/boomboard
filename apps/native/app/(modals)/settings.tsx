@@ -192,11 +192,6 @@ export default function SettingsModal() {
     router.push("/(modals)/account-details");
   }, []);
 
-  // Handle notifications navigation
-  const handleNotificationsPress = useCallback(() => {
-    router.push("/(modals)/notifications");
-  }, []);
-
   // Handle appearance navigation
   const handleAppearancePress = useCallback(() => {
     router.push("/(modals)/appearance");
@@ -283,13 +278,6 @@ export default function SettingsModal() {
             color: "purple",
           },
           {
-            id: "notifications",
-            icon: Bell,
-            label: "Notifications",
-            onPress: handleNotificationsPress,
-            color: "pink",
-          },
-          {
             id: "manage-subscriptions",
             icon: CreditCard,
             label: "Manage Subscriptions",
@@ -372,7 +360,6 @@ export default function SettingsModal() {
       handleSignOut,
       handleResetOnboarding,
       handleAccountPress,
-      handleNotificationsPress,
       handleAppearancePress,
       handleManageSubscriptions,
       handleRequestFeature,

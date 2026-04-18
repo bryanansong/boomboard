@@ -34,13 +34,6 @@ export default function ModalsLayout() {
         }}
       />
       <Stack.Screen
-        name="notifications"
-        options={{
-          ...getModalScreenOptionsWithoutLargeTitle("Notifications"),
-          presentation: "card",
-        }}
-      />
-      <Stack.Screen
         name="appearance"
         options={{
           ...getModalScreenOptionsWithoutLargeTitle("Appearance"),

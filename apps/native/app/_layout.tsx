@@ -17,10 +17,6 @@ import { convex } from "@/lib/convex/client";
 import { useAppTheme } from "@/lib/hooks";
 import { useOnboardingStore } from "@/lib/stores";
 import { setupQuickActions } from "@/lib/quick-actions";
-import { configureNotificationHandler, usePushNotificationSetup } from "@/lib/notifications";
-
-// Configure push notification handler at app startup
-configureNotificationHandler();
 
 function StackLayout() {
   const { isLoaded, isSignedIn } = useAuth();
@@ -28,9 +24,6 @@ function StackLayout() {
   // Use Zustand stores directly for better performance
   const isOnboardingComplete = useOnboardingStore((state) => state.isComplete);
   const { isDark, initializeTheme } = useAppTheme();
-
-  // Auto-sync push notification token with Convex when authenticated
-  usePushNotificationSetup();
 
   // Enable linking to the `href` param when a quick action is used
   useQuickActionRouting();
