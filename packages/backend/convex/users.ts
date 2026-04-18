@@ -1,4 +1,3 @@
-import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 
 /**
@@ -38,17 +37,13 @@ export const store = mutation({
 
     const userData = {
       tokenIdentifier: identity.tokenIdentifier,
-      name: identity.name,
-      email: identity.email,
-      picture: identity.pictureUrl,
-      givenName: identity.givenName,
-      familyName: identity.familyName,
-      emailVerified: identity.emailVerified,
-      nickname: identity.nickname,
+      name: identity.name ?? "",
+      email: identity.email ?? "",
+      picture: identity.pictureUrl ?? "",
+      givenName: identity.givenName ?? "",
+      familyName: identity.familyName ?? "",
+      emailVerified: identity.emailVerified ?? false,
       updatedAt: Date.now(),
-      // Store the full identity object for completeness as requested
-      // We generally flatten relevant fields but storing raw logic helps rapid prototyping
-      raw: identity, 
     };
 
     if (user !== null) {
