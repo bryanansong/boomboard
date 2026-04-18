@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from "react";
 import { View } from "react-native";
 import { MultiStepLoader } from "@/components/ui/multi-step-loader";
 import { useOnboarding } from "@/lib/onboarding";
-import { usePostHog } from 'posthog-react-native';
 import { useHaptic } from "@/lib/hooks";
 
 const loadingStates = [
@@ -15,7 +14,6 @@ const loadingStates = [
 export default function ProcessingScreen() {
 	const { next } = useOnboarding();
 	const [loading, setLoading] = useState(true);
-	const posthog = usePostHog();
 	const { light: hapticLight, success: hapticSuccess } = useHaptic();
 
 	// Stable ref so the timer never restarts when `next` reference changes
@@ -23,8 +21,6 @@ export default function ProcessingScreen() {
 	nextRef.current = next;
 
 	useEffect(() => {
-		posthog.capture('onboarding:processing_started');
-
 		// 5 states * 1800ms = 9000ms
 		const stepDuration = 1800;
 		const totalTime = stepDuration * loadingStates.length;
@@ -37,7 +33,7 @@ export default function ProcessingScreen() {
 		}, totalTime + 500);
 
 		return () => clearTimeout(timer);
-	}, []); // eslint-disable-line react-hooks/exhaustive-deps
+	}, [hapticSuccess]); // eslint-disable-line react-hooks/exhaustive-deps
 
 	return (
 		<View className="flex-1 bg-background">

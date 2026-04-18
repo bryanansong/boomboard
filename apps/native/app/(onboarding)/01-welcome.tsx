@@ -12,7 +12,6 @@ import { Sparkles } from "lucide-react-native";
 import React, { useEffect, useCallback } from "react";
 import { Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { usePostHog } from "posthog-react-native";
 
 export default function WelcomeScreen() {
   const insets = useSafeAreaInsets();
@@ -20,17 +19,10 @@ export default function WelcomeScreen() {
   const { isDark } = useAppTheme();
   const { medium: hapticMedium } = useHaptic();
 
-  const posthog = usePostHog();
-
-  useEffect(() => {
-    posthog.capture("onboarding:welcome_screen_viewed");
-  }, [posthog]);
-
   const handleGetStarted = useCallback(() => {
     hapticMedium();
-    posthog.capture("onboarding:get_started_tapped");
     next();
-  }, [next, posthog, hapticMedium]);
+  }, [next, hapticMedium]);
 
   return (
     <View className="flex-1 bg-background">

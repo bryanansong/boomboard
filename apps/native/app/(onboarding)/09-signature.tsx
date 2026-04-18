@@ -4,10 +4,9 @@ import { useHaptic } from "@/lib/hooks";
 import { Canvas, Path, Skia } from "@shopify/react-native-skia";
 import { Button } from "heroui-native";
 import { BadgeCheck } from "lucide-react-native";
-import React, { useMemo, useState, useEffect, useCallback, useRef } from "react";
+import React, { useMemo, useState, useCallback, useRef } from "react";
 import { Text, View, Pressable } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import { usePostHog } from 'posthog-react-native';
 import { PIConfetti, PIConfettiMethods } from 'react-native-fast-confetti';
 
 const COMMITMENTS = [
@@ -20,20 +19,14 @@ const COMMITMENTS = [
 export default function SignatureScreen() {
   const { next } = useOnboarding();
   const [lines, setLines] = useState<{ x: number; y: number }[][]>([]);
-  const posthog = usePostHog();
   const { success: hapticSuccess } = useHaptic();
   
   const confettiRef = useRef<PIConfettiMethods>(null);
   const [isAnimating, setIsAnimating] = useState(false);
 
-  useEffect(() => {
-    posthog.capture('onboarding:signature_started');
-  }, [posthog]);
-
   const handleContinue = useCallback(() => {
     if (isAnimating) return;
     hapticSuccess();
-    posthog.capture('onboarding:signature_signed');
     
     // Play confetti explosion and wait before transitioning
     setIsAnimating(true);
@@ -42,7 +35,7 @@ export default function SignatureScreen() {
     setTimeout(() => {
       next();
     }, 2000);
-  }, [next, posthog, hapticSuccess, isAnimating]);
+  }, [next, hapticSuccess, isAnimating]);
 
   // Build the Skia Path directly from the points
   const signaturePath = useMemo(() => {

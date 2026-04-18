@@ -1,27 +1,21 @@
 import { Button } from "heroui-native";
-import React, { useCallback, useEffect } from "react";
+import React, { useCallback } from "react";
 import { Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MembershipCard } from "@/components/membership-card";
 import { useOnboarding } from "@/lib/onboarding";
 import { useHaptic } from "@/lib/hooks";
 import { ChevronRightIcon } from "lucide-react-native";
-import { usePostHog } from 'posthog-react-native';
 
 export default function StepScreen() {
   const insets = useSafeAreaInsets();
   const { next } = useOnboarding();
-  const posthog = usePostHog();
   const { medium: hapticMedium } = useHaptic();
 
   const handleNext = useCallback(() => {
     hapticMedium();
     next();
   }, [hapticMedium, next]);
-
-  useEffect(() => {
-    posthog.capture('onboarding:membership_card_viewed');
-  }, [posthog]);
 
   return (
     <View className="flex-1 bg-background">

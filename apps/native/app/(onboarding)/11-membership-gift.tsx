@@ -7,8 +7,6 @@ import { MembershipCard } from "@/components/membership-card";
 import { useOnboarding } from "@/lib/onboarding";
 import { useHaptic } from "@/lib/hooks";
 import { ChevronRightIcon } from "lucide-react-native";
-import { usePostHog } from 'posthog-react-native';
-
 /**
  * Formats the current date as a human-readable string (e.g., "Feb 20, 2026").
  *
@@ -35,17 +33,12 @@ export default function MembershipGiftScreen() {
 
 	const firstName = user?.firstName ?? "Member";
 	const joinDate = useMemo(() => formatJoinDate(), []);
-	const posthog = usePostHog();
 	const { medium: hapticMedium } = useHaptic();
 
 	const handleContinue = useCallback(() => {
 		hapticMedium();
 		next();
 	}, [hapticMedium, next]);
-
-	useEffect(() => {
-		posthog.capture('onboarding:membership_gift_viewed');
-	}, [posthog]);
 
 	return (
 		<View className="flex-1 bg-background">

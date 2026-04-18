@@ -3,9 +3,8 @@ import { useOnboarding } from "@/lib/onboarding";
 import { useHaptic } from "@/lib/hooks";
 import { Image } from "expo-image";
 import { PressableFeedback } from "heroui-native";
-import React, { useCallback, useEffect } from "react";
+import React, { useCallback } from "react";
 import { Alert, Text, View } from "react-native";
-import { usePostHog } from 'posthog-react-native';
 import PERMISSION_IMAGE from "@/assets/content/3x-screentime-permission.png";
 
 /**
@@ -27,25 +26,18 @@ function showPermissionAlert(onGranted: () => void, onDenied: () => void): void 
 
 export default function ConnectPermissionScreen() {
 	const { next } = useOnboarding();
-	const posthog = usePostHog();
 	const { medium: hapticMedium } = useHaptic();
-
-	useEffect(() => {
-		posthog.capture('onboarding:permission_shown');
-	}, [posthog]);
 
 	const handleImagePress = useCallback(() => {
 		hapticMedium();
 		showPermissionAlert(
 			() => {
-				posthog.capture('onboarding:permission_granted');
 				next();
 			},
 			() => {
-				posthog.capture('onboarding:permission_denied');
 			}
 		);
-	}, [next, posthog, hapticMedium]);
+	}, [next, hapticMedium]);
 
 	return (
 		<SafeAreaView className="flex-1 bg-background">

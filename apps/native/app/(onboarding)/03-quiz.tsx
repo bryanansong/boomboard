@@ -1,6 +1,6 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { RadioGroup, ScrollShadow } from "heroui-native";
-import React, { useCallback, useState, useEffect, useRef } from "react";
+import React, { useCallback, useState } from "react";
 import { ScrollView, Text, View, KeyboardAvoidingView, Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
@@ -11,7 +11,6 @@ import {
 } from "@/components/quiz";
 import { useOnboarding } from "@/lib/onboarding";
 import { useHaptic } from "@/lib/hooks";
-import { usePostHog } from 'posthog-react-native';
 
 interface QuizQuestion {
 	id: number;
@@ -106,8 +105,6 @@ export default function QuizScreen() {
 	const { next } = useOnboarding();
 	const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 	const [answers, setAnswers] = useState<Record<number, string>>({});
-	const posthog = usePostHog();
-	const hasTrackedStart = useRef(false);
 	const { light: hapticLight } = useHaptic();
 
 	/** Builds a consistent property bag for every quiz analytics event. */
@@ -123,23 +120,6 @@ export default function QuizScreen() {
 		[],
 	);
 
-	/**
-	 * Fires `quiz_started` once on mount and `quiz_question_viewed` on every
-	 * question transition (including the first). This gives PostHog a clean
-	 * per-step funnel: Q1 viewed → Q2 viewed → … → quiz completed.
-	 */
-	useEffect(() => {
-		const question = quizQuestions[currentQuestionIndex];
-		const props = buildQuestionProps(question, currentQuestionIndex);
-
-		if (!hasTrackedStart.current) {
-			posthog.capture('onboarding:quiz_started', props);
-			hasTrackedStart.current = true;
-		}
-
-		posthog.capture('onboarding:quiz_question_viewed', props);
-	}, [currentQuestionIndex, posthog, buildQuestionProps]);
-
 	const currentQuestion = quizQuestions[currentQuestionIndex];
 	const selectedAnswer = answers[currentQuestion.id];
 
@@ -149,30 +129,21 @@ export default function QuizScreen() {
 
 		// Auto-advance for single-choice questions with a 200ms delay
 		setTimeout(() => {
-			posthog.capture('onboarding:quiz_answer_submitted', {
-				...buildQuestionProps(currentQuestion, currentQuestionIndex),
-				answer: option,
-			});
-
 			if (currentQuestionIndex < quizQuestions.length - 1) {
 				setCurrentQuestionIndex((prev) => prev + 1);
 			} else {
 				next();
 			}
 		}, 200);
-	}, [hapticLight, currentQuestion, currentQuestionIndex, posthog, buildQuestionProps, next]);
+	}, [hapticLight, currentQuestion, currentQuestionIndex, next]);
 
 	const handleSkip = useCallback(() => {
-		posthog.capture('onboarding:quiz_question_skipped', {
-			...buildQuestionProps(currentQuestion, currentQuestionIndex),
-		});
-
 		if (currentQuestionIndex < quizQuestions.length - 1) {
 			setCurrentQuestionIndex((prev) => prev + 1);
 		} else {
 			next();
 		}
-	}, [currentQuestionIndex, next, posthog, currentQuestion, buildQuestionProps]);
+	}, [currentQuestionIndex, next]);
 
 	const handlePrevious = useCallback(() => {
 		setCurrentQuestionIndex((prev) =>

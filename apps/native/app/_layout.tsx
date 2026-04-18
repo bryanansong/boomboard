@@ -14,13 +14,12 @@ import { KeyboardProvider } from "react-native-keyboard-controller";
 
 import { NavigationThemeProvider } from "@/components/navigation-theme-provider";
 import { convex } from "@/lib/convex/client";
-import { useAppTheme, usePostHogIdentify } from "@/lib/hooks";
+import { useAppTheme } from "@/lib/hooks";
 import { useOnboardingStore } from "@/lib/stores";
 import { setupQuickActions } from "@/lib/quick-actions";
 import { configureNotificationHandler, usePushNotificationSetup } from "@/lib/notifications";
 import { SuperwallDeepLinkHandler } from "@/lib/superwall/deep-link-handler";
 import { SuperwallProvider } from "expo-superwall";
-import { PostHogProvider } from 'posthog-react-native'
 
 // Configure push notification handler at app startup
 configureNotificationHandler();
@@ -34,9 +33,6 @@ function StackLayout() {
 
   // Auto-sync push notification token with Convex when authenticated
   usePushNotificationSetup();
-
-  // Identify the current user in PostHog when auth state changes
-  usePostHogIdentify();
 
   // Enable linking to the `href` param when a quick action is used
   useQuickActionRouting();

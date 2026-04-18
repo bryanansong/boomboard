@@ -8,7 +8,6 @@ import * as StoreReview from "expo-store-review";
 import React, { useCallback, useEffect } from "react";
 import { ScrollView, Text, View } from "react-native";
 import { Star } from "lucide-react-native";
-import { usePostHog } from 'posthog-react-native';
 import wreathImage from "@/assets/content/rating-wreath.png";
 
 import avatarAsianMan from "@/assets/avatars/avatar-asian-man.jpg";
@@ -160,7 +159,6 @@ TestimonialCard.displayName = "TestimonialCard";
 
 export default function SocialProofScreen() {
 	const { next } = useOnboarding();
-	const posthog = usePostHog();
 	const { medium: hapticMedium } = useHaptic();
 	const isButtonReady = useMountDelay(1000);
 
@@ -171,8 +169,6 @@ export default function SocialProofScreen() {
 
 	/** Request store review on mount */
 	useEffect(() => {
-		posthog.capture('onboarding:rating_requested');
-
 		const requestReview = async () => {
 			try {
 				if (await StoreReview.hasAction()) {

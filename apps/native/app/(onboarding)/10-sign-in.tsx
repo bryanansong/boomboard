@@ -9,7 +9,6 @@ import { useOnboarding } from "@/lib/onboarding";
 import { useHaptic } from "@/lib/hooks";
 import { Ionicons } from "@expo/vector-icons";
 import { withUniwind } from "uniwind";
-import { usePostHog } from 'posthog-react-native';
 
 const StyledIonicons = withUniwind(Ionicons);
 
@@ -49,15 +48,9 @@ export default function SignInScreen() {
   const { next } = useOnboarding();
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const { medium: hapticMedium } = useHaptic();
-  const posthog = usePostHog();
-
-  useEffect(() => {
-    posthog.capture('onboarding:sign_in_viewed');
-  }, [posthog]);
 
   const onGooglePress = useCallback(async () => {
     hapticMedium();
-    posthog.capture('onboarding:sign_in_method_selected', { method: 'google' });
     // If already signed in (e.g. from a previous session), skip OAuth entirely
     if (isSignedIn) {
       next();
@@ -80,7 +73,6 @@ export default function SignInScreen() {
 
       if (result.createdSessionId) {
         await result.setActive!({ session: result.createdSessionId });
-        posthog.capture('onboarding:sign_in_success', { method: 'google' });
         // Proceed to next onboarding screen (e.g. paywall)
         next();
       } else if (result.authSessionResult?.type === "dismiss") {
@@ -103,12 +95,10 @@ export default function SignInScreen() {
       // If Clerk says a session already exists, the user IS signed in — just proceed
       if (isClerkError(err) && err.errors.some((e) => e.code === "session_exists")) {
         console.log("Session already exists, proceeding to next screen.");
-        posthog.capture('onboarding:sign_in_success', { method: 'google' });
         next();
         return;
       }
 
-      posthog.capture('onboarding:sign_in_failed', { method: 'google', error: String(err) });
       console.error("[Onboarding] OAuth error:", err);
       toast.show({
         label: "Sign In Failed",
@@ -145,8 +135,6 @@ export default function SignInScreen() {
             className="w-full h-14 bg-background-secondary rounded-full flex-row items-center justify-center gap-3 border border-border"
             onPress={() => {
               hapticMedium();
-              posthog.capture('onboarding:sign_in_method_selected', { method: 'apple' });
-              posthog.capture('onboarding:sign_in_failed', { method: 'apple', error: "Not Configured" });
               toast.show({
                 label: "Not Configured",
                 description: "Apple Auth is not set up.",

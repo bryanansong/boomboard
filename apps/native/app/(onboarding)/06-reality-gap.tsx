@@ -1,12 +1,11 @@
 import { Button, RadioGroup } from "heroui-native";
-import React, { useCallback, useState, useEffect, useRef } from "react";
+import React, { useCallback, useState } from "react";
 import { Text, View } from "react-native";
 import { QuizOption } from "@/components/quiz";
 import { SafeAreaView } from "@/components/safe-area-view";
 import { StoryProgressBar } from "@/components/story";
 import { useOnboarding } from "@/lib/onboarding";
 import { useHaptic } from "@/lib/hooks";
-import { usePostHog } from 'posthog-react-native';
 
 interface TextSlide {
 	type: "text";
@@ -178,8 +177,6 @@ export default function RealityGapScreen() {
 	const { next } = useOnboarding();
 	const [currentIndex, setCurrentIndex] = useState(0);
 	const [questionAnswer, setQuestionAnswer] = useState("");
-	const posthog = usePostHog();
-	const hasTrackedStart = useRef(false);
 	const { light: hapticLight, medium: hapticMedium } = useHaptic();
 
 	const currentSlide = SLIDES[currentIndex];
@@ -195,23 +192,6 @@ export default function RealityGapScreen() {
 		}),
 		[],
 	);
-
-	/**
-	 * Fires `reality_started` once on mount and `reality_slide_viewed` on every
-	 * slide transition (including the first). This gives PostHog a clean
-	 * per-step funnel: Slide 1 viewed → Slide 2 viewed → … → screen exited.
-	 */
-	useEffect(() => {
-		const slide = SLIDES[currentIndex];
-		const props = buildSlideProps(slide, currentIndex);
-
-		if (!hasTrackedStart.current) {
-			posthog.capture('onboarding:reality_started', props);
-			hasTrackedStart.current = true;
-		}
-
-		posthog.capture('onboarding:reality_slide_viewed', props);
-	}, [currentIndex, posthog, buildSlideProps]);
 
 	/** Whether the Continue button should be disabled */
 	const isContinueDisabled =
@@ -229,11 +209,7 @@ export default function RealityGapScreen() {
 	const handleSelectAnswer = useCallback((value: string) => {
 		hapticLight();
 		setQuestionAnswer(value);
-		posthog.capture('onboarding:commitment_selected', {
-			...buildSlideProps(currentSlide, currentIndex),
-			commitment_level: value,
-		});
-	}, [hapticLight, posthog, buildSlideProps, currentSlide, currentIndex]);
+	}, [hapticLight]);
 
 	return (
 		<SafeAreaView className="flex-1 bg-background">

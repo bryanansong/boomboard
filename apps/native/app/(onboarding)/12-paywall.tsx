@@ -4,7 +4,6 @@ import { useRouter } from "expo-router";
 import React, { useEffect, useCallback } from "react";
 import { View, ActivityIndicator, Text, TouchableOpacity } from "react-native";
 import { Button } from "heroui-native";
-import { usePostHog } from 'posthog-react-native';
 
 const __DEV_MODE__ = __DEV__;
 
@@ -12,27 +11,19 @@ export default function PaywallScreen() {
   const { startTrial } = useOnboarding();
   const router = useRouter();
   const [error, setError] = React.useState<string | null>(null);
-  const posthog = usePostHog();
   const isConfigured = useSuperwall((state) => state.isConfigured);
   const subscriptionStatus = useSuperwall((state) => state.subscriptionStatus);
   const setSubscriptionStatus = useSuperwall((state) => state.setSubscriptionStatus);
 
-  useEffect(() => {
-    posthog.capture('onboarding_paywall_shown');
-  }, [posthog]);
-
   const { registerPlacement } = usePlacement({
     onError: (err) => {
-      posthog.capture('onboarding:paywall_error', { error: String(err) });
       console.error("Placement Error:", err);
       setError(String(err));
     },
     onPresent: (info) => console.log("Paywall Presented:", info),
     onDismiss: (info, result) => {
-      posthog.capture('onboarding:paywall_dismissed', { result: String(result) });
       console.log("Paywall Dismissed:", info, "Result:", result);
       // Proceed to app after paywall interaction
-      posthog.capture('onboarding:completed');
       startTrial();
     },
   });
@@ -57,9 +48,8 @@ export default function PaywallScreen() {
 
   useEffect(() => {
     if (!isConfigured) return;
-    posthog.capture('onboarding:paywall_shown');
     handleTriggerPlacement();
-  }, [handleTriggerPlacement, posthog, isConfigured]);
+  }, [handleTriggerPlacement, isConfigured]);
 
   const handleDevSkip = useCallback(() => {
     if (__DEV_MODE__) {
@@ -91,10 +81,9 @@ export default function PaywallScreen() {
           <Button onPress={handleTriggerPlacement}>
             <Button.Label>Retry</Button.Label>
           </Button>
-          <Button onPress={() => {
-             posthog.capture('onboarding:completed');
-             startTrial();
-          }} variant="ghost">
+<Button onPress={() => {
+              startTrial();
+           }} variant="ghost">
              <Button.Label>Continue without Paywall (Fallback)</Button.Label>
           </Button>
         </View>

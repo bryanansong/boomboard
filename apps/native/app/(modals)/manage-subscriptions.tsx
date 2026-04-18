@@ -10,7 +10,6 @@ import {
 } from "react-native";
 import { BlurView } from "expo-blur";
 import { Ionicons } from "@expo/vector-icons";
-import { usePostHog } from "posthog-react-native";
 
 import { LargeTitleScrollView } from "@/components/ui/large-title-view";
 
@@ -163,25 +162,13 @@ function FeatureItem({ feature }: { feature: string }) {
 export default function ManageSubscriptionsModal() {
   const [showUnsubscribeModal, setShowUnsubscribeModal] = useState(false);
   const subscription = MOCK_SUBSCRIPTION;
-  const posthog = usePostHog();
-
-  // Track when the manage subscriptions modal is viewed
-  useEffect(() => {
-    posthog.capture("subscription:manage_viewed", {
-      tier: subscription.tier,
-      billingCycle: subscription.billingCycle,
-    });
-  }, [posthog, subscription]);
 
   /**
    * Handles opening the unsubscribe confirmation modal.
    */
   const handleUnsubscribePress = useCallback(() => {
-    posthog.capture("subscription:unsubscribe_intent", {
-      tier: subscription.tier,
-    });
     setShowUnsubscribeModal(true);
-  }, [posthog, subscription]);
+  }, []);
 
   /**
    * Handles closing the unsubscribe modal.
@@ -199,11 +186,6 @@ export default function ManageSubscriptionsModal() {
     console.log("[PLACEHOLDER] handleConfirmUnsubscribe called");
     console.log("  - Feedback:", feedback);
     
-    posthog.capture("subscription:unsubscribe_confirmed", {
-      tier: subscription.tier,
-      feedback: feedback.trim() || "",
-    });
-
     // TODO: Implement actual unsubscription logic:
     // - Call subscription cancellation API
     // - Submit feedback to analytics/backend
@@ -212,7 +194,7 @@ export default function ManageSubscriptionsModal() {
     // - Navigate back or update UI accordingly
 
     setShowUnsubscribeModal(false);
-  }, [posthog, subscription]);
+  }, []);
 
   return (
     <>

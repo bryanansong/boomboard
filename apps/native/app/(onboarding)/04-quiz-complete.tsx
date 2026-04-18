@@ -6,7 +6,6 @@ import { Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOnboarding } from "@/lib/onboarding";
 import { useHaptic } from "@/lib/hooks";
-import { usePostHog } from 'posthog-react-native';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const fingerHeartImage = require("@/assets/content/finger-heart.png");
@@ -18,17 +17,12 @@ const INNER_CIRCLE_SIZE = 230;
 export default function QuizCompleteScreen() {
 	const insets = useSafeAreaInsets();
 	const { next, data } = useOnboarding();
-	const posthog = usePostHog();
 	const { medium: hapticMedium } = useHaptic();
 
 	const handleContinue = useCallback(() => {
 		hapticMedium();
 		next();
 	}, [hapticMedium, next]);
-
-	useEffect(() => {
-		posthog.capture('onboarding:quiz_completed');
-	}, [posthog]);
 
 	return (
 		<View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>

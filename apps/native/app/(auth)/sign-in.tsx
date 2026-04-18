@@ -4,7 +4,6 @@ import * as WebBrowser from "expo-web-browser";
 import { Button, useToast } from "heroui-native";
 import { router } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
-import { usePostHog } from "posthog-react-native";
 import { Platform, Text, View } from "react-native";
 import { storage } from "@/lib/storage";
 
@@ -28,12 +27,10 @@ export default function SignInPage() {
   const { startSSOFlow } = useSSO();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const posthog = usePostHog();
 
   const onPress = useCallback(async () => {
     try {
       setIsLoading(true);
-      posthog.capture("auth:sign_in_attempted", { provider: "google" });
 
 			// Redirect back to this screen after OAuth completes. Using the current
 			// route (sign-in) ensures Expo Router lands on a valid page. The
@@ -48,14 +45,9 @@ export default function SignInPage() {
 
       if (result.createdSessionId) {
         await result.setActive!({ session: result.createdSessionId });
-        posthog.capture("auth:sign_in_success", { provider: "google" });
         // AuthGuard will handle navigation automatically
       } else if (result.authSessionResult?.type === "dismiss") {
         // User dismissed the browser — this is a genuine cancellation
-        posthog.capture("auth:sign_in_failed", {
-          provider: "google",
-          reason: "cancelled",
-        });
         toast.show({
           label: "Sign In Cancelled",
           description: "Please try again to continue.",
@@ -63,10 +55,6 @@ export default function SignInPage() {
           duration: 3000,
         });
       } else {
-        posthog.capture("auth:sign_in_failed", {
-          provider: "google",
-          reason: "no_session",
-        });
         toast.show({
           label: "Sign In Incomplete",
           description: "Something went wrong. Please try again.",
@@ -76,11 +64,6 @@ export default function SignInPage() {
       }
     } catch (err) {
       console.error("[Auth] OAuth error:", err);
-      posthog.capture("auth:sign_in_failed", { 
-        provider: "google", 
-        reason: "error",
-        error_message: err instanceof Error ? err.message : String(err)
-      });
       toast.show({
         label: "Sign In Failed",
         description: "Something went wrong. Please try again.",
@@ -90,7 +73,7 @@ export default function SignInPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [startSSOFlow, toast, posthog]);
+  }, [startSSOFlow, toast]);
 
   const handleClearStorage = useCallback(async () => {
     if (!__DEV__) {
