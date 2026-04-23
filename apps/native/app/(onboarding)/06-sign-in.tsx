@@ -122,11 +122,11 @@ export default function SignInScreen() {
       {/* Header */}
       <View className="items-center mt-12 mb-10">
         <Text className="text-4xl font-bold text-foreground mb-10 tracking-tight">
-          App Name
+          BoomBoard
         </Text>
         
         <Text className="text-4xl text-foreground mb-2">
-          Save your progress
+          Sign up to save your progress
         </Text>
         <Text className="text-lg text-muted text-center font-medium">
           Let's get started on your journey
