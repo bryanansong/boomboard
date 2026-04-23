@@ -1,5 +1,4 @@
 import { Text, View } from "react-native";
-import { AuraBackground } from "@/components/ui/aura-background";
 import { TabScreenScrollView } from "@/components/ui/tab-screen-view";
 import { useTabFocusHaptic } from "@/lib/hooks";
 
@@ -42,7 +41,6 @@ export default function HomeScreen() {
 	return (
 		<TabScreenScrollView
 			contentContainerClassName="px-5"
-			topOverlay={<AuraBackground anchorToTopEdge />}
 		>
 			{/* Quick Actions Section */}
 			<DashboardSection title="Quick Actions">

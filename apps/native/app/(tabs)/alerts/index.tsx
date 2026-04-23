@@ -1,5 +1,4 @@
 import { Text, View } from "react-native";
-import { AuraBackground } from "@/components/ui/aura-background";
 import { TabScreenScrollView } from "@/components/ui/tab-screen-view";
 import { useTabFocusHaptic } from "@/lib/hooks";
 
@@ -15,7 +14,6 @@ export default function AlertsScreen() {
 	return (
 		<TabScreenScrollView
 			contentContainerClassName="px-5"
-			topOverlay={<AuraBackground anchorToTopEdge />}
 		>
 			<View className="flex-1 items-center justify-center py-50">
 				<Text className="mb-4 text-[64px]">🔔</Text>
