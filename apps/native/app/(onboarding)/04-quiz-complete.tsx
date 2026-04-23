@@ -1,5 +1,4 @@
-import { Image } from "expo-image";
-import { LinearGradient } from "expo-linear-gradient";
+
 import { Button } from "heroui-native";
 import React, { useCallback, useEffect } from "react";
 import { Text, View } from "react-native";
@@ -7,12 +6,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOnboarding } from "@/lib/onboarding";
 import { useHaptic } from "@/lib/hooks";
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const fingerHeartImage = require("@/assets/content/finger-heart.png");
-
-/** Gradient circle ring dimensions */
-const CIRCLE_SIZE = 260;
-const INNER_CIRCLE_SIZE = 230;
 
 export default function QuizCompleteScreen() {
 	const insets = useSafeAreaInsets();
@@ -29,39 +22,7 @@ export default function QuizCompleteScreen() {
 
 			{/* Main Content */}
 			<View className="flex-1 items-center justify-center px-8">
-				{/* Gradient Circle with Illustration */}
-				<View
-					className="items-center justify-center"
-					style={{ width: CIRCLE_SIZE, height: CIRCLE_SIZE }}
-				>
-					<LinearGradient
-						colors={["#f0c6d4", "#c6d4f0"]}
-						start={{ x: 0, y: 0.5 }}
-						end={{ x: 1, y: 0.5 }}
-						style={{
-							width: CIRCLE_SIZE,
-							height: CIRCLE_SIZE,
-							borderRadius: CIRCLE_SIZE / 2,
-							alignItems: "center",
-							justifyContent: "center",
-						}}
-					>
-						<View
-							className="items-center justify-center bg-background"
-							style={{
-								width: INNER_CIRCLE_SIZE,
-								height: INNER_CIRCLE_SIZE,
-								borderRadius: INNER_CIRCLE_SIZE / 2,
-							}}
-						>
-							<Image
-								source={fingerHeartImage}
-								style={{ width: 160, height: 160 }}
-								contentFit="contain"
-							/>
-						</View>
-					</LinearGradient>
-				</View>
+
 
 				{/* Header Titles */}
 				<View className="mt-8 items-center justify-center">
