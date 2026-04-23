@@ -16,9 +16,13 @@
         {
           "ios": {
             "buildReactNativeFromSource": true
+          },
+          "android": {
+            "enableProguardInReleaseBuilds": true
           }
         }
-      ]
+      ],
+      "./withSplitApks.js"
     ],
     "experiments": {
       "typedRoutes": true,
