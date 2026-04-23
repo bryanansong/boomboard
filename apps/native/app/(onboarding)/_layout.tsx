@@ -16,7 +16,6 @@ type SelectOption = {
 
 const ONBOARDING_SCREENS: SelectOption[] = [
 	{ value: "01-welcome", label: "01 Welcome" },
-	{ value: "02-membership-card", label: "02 Membership Card" },
 	{ value: "03-quiz", label: "03 Quiz" },
 	{ value: "04-quiz-complete", label: "04 Quiz Complete" },
 	{ value: "06-sign-in", label: "06 Sign In" },
@@ -66,7 +65,6 @@ export default function OnboardingLayout() {
 			>
 				<Stack.Screen name="index" options={{ animation: "none" }} />
 				<Stack.Screen name="01-welcome" options={{ animation: "none" }} />
-				<Stack.Screen name="02-membership-card" />
 				<Stack.Screen name="03-quiz" />
 				<Stack.Screen name="04-quiz-complete" />
 				<Stack.Screen name="06-sign-in" />

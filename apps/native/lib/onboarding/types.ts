@@ -25,10 +25,9 @@ export type OnboardingData = typeof DEFAULT_ONBOARDING_DATA;
 // Screen metadata - inferred from the array
 export const ONBOARDING_SCREENS = [
 	{ id: 1, name: "Welcome Hero", route: "01-welcome" },
-	{ id: 2, name: "Membership Card", route: "02-membership-card" },
-	{ id: 3, name: "Quiz", route: "03-quiz" },
-	{ id: 4, name: "Quiz Complete", route: "04-quiz-complete" },
-	{ id: 5, name: "Sign In", route: "06-sign-in" },
+	{ id: 2, name: "Quiz", route: "03-quiz" },
+	{ id: 3, name: "Quiz Complete", route: "04-quiz-complete" },
+	{ id: 4, name: "Sign In", route: "06-sign-in" },
 ] as const;
 
 export type OnboardingScreenMeta = (typeof ONBOARDING_SCREENS)[number];
