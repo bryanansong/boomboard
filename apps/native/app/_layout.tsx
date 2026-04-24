@@ -4,7 +4,6 @@ import { tokenCache } from "@clerk/clerk-expo/token-cache";
 import { env } from "@boomboard/env/native";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
 import { Stack } from "expo-router";
-import { useQuickActionRouting } from "expo-quick-actions/router";
 import { StatusBar } from "expo-status-bar";
 import { HeroUINativeProvider } from "heroui-native";
 import { useEffect } from "react";
@@ -16,7 +15,6 @@ import { NavigationThemeProvider } from "@/components/navigation-theme-provider"
 import { convex } from "@/lib/convex/client";
 import { useAppTheme } from "@/lib/hooks";
 import { useOnboardingStore } from "@/lib/stores";
-import { setupQuickActions } from "@/lib/quick-actions";
 
 function StackLayout() {
   const { isLoaded, isSignedIn } = useAuth();
@@ -25,12 +23,9 @@ function StackLayout() {
   const isOnboardingComplete = useOnboardingStore((state) => state.isComplete);
   const { isDark, initializeTheme } = useAppTheme();
 
-  // Enable linking to the `href` param when a quick action is used
-  useQuickActionRouting();
 
-  // Setup quick actions on app load
+  // Setup theme on app load
   useEffect(() => {
-    setupQuickActions();
     initializeTheme();
   }, [initializeTheme]);
 

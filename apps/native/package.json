@@ -38,7 +38,6 @@
     "expo-linear-gradient": "^55.0.13",
     "expo-linking": "^55.0.13",
     "expo-network": "^55.0.13",
-    "expo-quick-actions": "^6.0.1",
     "expo-router": "^55.0.12",
     "expo-secure-store": "^55.0.13",
     "expo-status-bar": "^55.0.5",
