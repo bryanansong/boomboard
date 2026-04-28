@@ -34,7 +34,7 @@ function SettingsButton() {
 }
 
 /**
- * Home tab stack layout with native iOS large title header.
+ * Sound Library tab stack layout with native iOS large title header.
  *
  * Provides:
  * - Large title that collapses into nav bar on scroll
@@ -45,12 +45,12 @@ function SettingsButton() {
  * - Use `getTabScreenOptionsWithCustomHeader` for both headerLeft/headerRight
  * - Add streak indicators, badges, or other elements as needed
  */
-export default function HomeLayout() {
+export default function SoundLibraryLayout() {
 	return (
 		<Stack screenOptions={{ headerShown: true, animation: Platform.OS === "android" ? "none" : undefined }}>
 			<Stack.Screen
 				name="index"
-				options={getTabScreenOptionsWithHeaderRight("Home", () => (
+				options={getTabScreenOptionsWithHeaderRight("Sound Library", () => (
 					<SettingsButton />
 				))}
 			/>

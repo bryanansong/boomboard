@@ -2,6 +2,7 @@ import { useMutation } from "convex/react";
 import { useEffect } from "react";
 import { DynamicColorIOS, Platform } from "react-native";
 import { NativeTabs } from "expo-router/unstable-native-tabs";
+import { Mic } from "lucide-react-native";
 
 import { api } from "@boomboard/backend/convex/_generated/api";
 import { useAuth } from "@/lib/auth";
@@ -28,15 +29,16 @@ export default function TabLayout() {
   return (
     <NativeTabs minimizeBehavior="onScrollDown" tintColor={tintColor}>
       <NativeTabs.Trigger name="home">
-        <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>Library</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
           sf={{ default: "house", selected: "house.fill" }}
         />
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="alerts">
-        <NativeTabs.Trigger.Label>Alerts</NativeTabs.Trigger.Label>
+      <NativeTabs.Trigger name="recording">
+        <NativeTabs.Trigger.Label>Record</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
-          sf={{ default: "bell", selected: "bell.fill" }}
+          sf={{ default: "mic", selected: "mic.fill" }}
+          src={<Mic size={24} />}
         />
       </NativeTabs.Trigger>
     </NativeTabs>

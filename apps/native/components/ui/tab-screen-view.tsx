@@ -150,11 +150,11 @@ interface TabScreenFlashListProps<T>
  * ```tsx
  * import { TabScreenFlashList } from '@/components/ui/tab-screen-view';
  *
- * function AlertsScreen() {
+ * function SoundLibraryScreen() {
  *   return (
  *     <TabScreenFlashList
- *       data={alerts}
- *       renderItem={({ item }) => <AlertItem alert={item} />}
+ *       data={sounds}
+ *       renderItem={({ item }) => <SoundItem sound={item} />}
  *       estimatedItemSize={80}
  *       contentContainerStyle={{ paddingHorizontal: 20 }}
  *     />

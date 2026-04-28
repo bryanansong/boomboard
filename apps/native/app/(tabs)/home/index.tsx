@@ -1,8 +1,9 @@
 import { Text, View } from "react-native";
 import { TabScreenScrollView } from "@/components/ui/tab-screen-view";
 import { useTabFocusHaptic } from "@/lib/hooks";
+import { Music } from "lucide-react-native";
 
-const DashboardSection = ({
+const SoundLibrarySection = ({
 	title,
 	children,
 }: {
@@ -17,7 +18,7 @@ const DashboardSection = ({
 	</View>
 );
 
-const DashboardCard = ({
+const SoundCard = ({
 	children,
 	className = "",
 }: {
@@ -30,49 +31,46 @@ const DashboardCard = ({
 );
 
 /**
- * Home screen with native iOS large title header.
+ * Sound Library screen with native iOS large title header.
  *
  * Uses TabScreenScrollView for proper content inset handling with
  * the transparent large title header.
  */
-export default function HomeScreen() {
+export default function SoundLibraryScreen() {
 	useTabFocusHaptic();
 
 	return (
 		<TabScreenScrollView
 			contentContainerClassName="px-5"
 		>
-			{/* Quick Actions Section */}
-			<DashboardSection title="Quick Actions">
-				<DashboardCard>
-					<View className="flex-row items-center">
-						<Text className="mr-4 text-4xl">🏠</Text>
-						<View className="flex-1">
-							<Text className="mb-1 font-semibold text-foreground text-lg">
-								Your Space
-							</Text>
-							<Text className="text-base text-muted leading-5">
-								Manage your personal settings and preferences
-							</Text>
-						</View>
-					</View>
-				</DashboardCard>
-			</DashboardSection>
-
-			{/* Activity Section */}
-			<DashboardSection title="Recent Activity">
-				<DashboardCard>
+			{/* My Sounds Section */}
+			<SoundLibrarySection title="My Sounds">
+				<SoundCard>
 					<View className="items-center py-5">
-						<Text className="mb-3 text-5xl">📊</Text>
+						<Music size={48} color="var(--color-muted)" className="mb-3" />
 						<Text className="mb-1 font-semibold text-foreground text-lg">
-							No recent activity
+							No sounds yet
 						</Text>
 						<Text className="text-center text-base text-muted">
-							Your recent activities will appear here
+							Your saved sounds will appear here. Go to Record to add some!
 						</Text>
 					</View>
-				</DashboardCard>
-			</DashboardSection>
+				</SoundCard>
+			</SoundLibrarySection>
+
+			{/* Favorites Section */}
+			<SoundLibrarySection title="Favorites">
+				<SoundCard>
+					<View className="items-center py-5">
+						<Text className="mb-1 font-semibold text-foreground text-lg">
+							No favorites
+						</Text>
+						<Text className="text-center text-base text-muted">
+							Sounds you mark as favorites will show up here
+						</Text>
+					</View>
+				</SoundCard>
+			</SoundLibrarySection>
 		</TabScreenScrollView>
 	);
 }

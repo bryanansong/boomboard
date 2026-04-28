@@ -3,7 +3,7 @@ import { Platform } from "react-native";
 import { getTabScreenOptions } from "@/lib/utils/tab-screen-options";
 
 /**
- * Alerts tab stack layout.
+ * Recording tab stack layout.
  *
  * Provides native iOS large title header with blur effect on scroll.
  * The title collapses from a large title into the nav bar on scroll.
@@ -12,10 +12,10 @@ import { getTabScreenOptions } from "@/lib/utils/tab-screen-options";
  * - Use `getTabScreenOptionsWithHeaderRight` for right-side elements
  * - Use `getTabScreenOptionsWithCustomHeader` for both sides
  */
-export default function AlertsLayout() {
+export default function RecordingLayout() {
   return (
     <Stack screenOptions={{ headerShown: true, animation: Platform.OS === "android" ? "none" : undefined }}>
-      <Stack.Screen name="index" options={getTabScreenOptions("Alerts")} />
+      <Stack.Screen name="index" options={getTabScreenOptions("Recording")} />
     </Stack>
   );
 }
