@@ -1,5 +1,5 @@
 import { View, Text } from "react-native";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import Animated, {
   useAnimatedStyle,
   withTiming,
@@ -40,7 +40,7 @@ const LoaderCore = ({ loadingStates, value = 0 }: LoaderCoreProps) => {
         {loadingStates.map((state, index) => {
           return (
             <LoaderItem
-              key={index}
+              key={state.text}
               index={index}
               state={state}
               transitionVal={transitionVal}
@@ -161,7 +161,9 @@ export const MultiStepLoader = ({
   loop?: boolean;
   onStepChange?: (step: number) => void;
 }) => {
-  const [currentState, setCurrentState] = useState(0);
+const [currentState, setCurrentState] = useState(0);
+  const onStepChangeRef = useRef(onStepChange);
+  onStepChangeRef.current = onStepChange;
 
   useEffect(() => {
     if (!loading) {
@@ -175,16 +177,16 @@ export const MultiStepLoader = ({
             ? 0
             : prevState + 1
           : Math.min(prevState + 1, loadingStates.length - 1);
-          
-        if (nextState !== prevState && onStepChange) {
-          onStepChange(nextState);
+        
+        if (nextState !== prevState && onStepChangeRef.current) {
+          onStepChangeRef.current(nextState);
         }
         return nextState;
       });
     }, duration);
 
     return () => clearTimeout(timeout);
-  }, [currentState, loading, loop, loadingStates.length, duration, onStepChange]);
+  }, [loading, loop, loadingStates.length, duration]);
 
   if (!loading) return null;
 

@@ -31,14 +31,12 @@ export default function TabLayout() {
         <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
           sf={{ default: "house", selected: "house.fill" }}
-          drawable="ic_home"
         />
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="alerts">
         <NativeTabs.Trigger.Label>Alerts</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
           sf={{ default: "bell", selected: "bell.fill" }}
-          drawable="ic_notifications"
         />
       </NativeTabs.Trigger>
     </NativeTabs>
