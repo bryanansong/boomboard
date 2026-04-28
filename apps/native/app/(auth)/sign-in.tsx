@@ -102,15 +102,18 @@ export default function SignInPage() {
   return (
     <View className="flex-1 bg-white justify-center p-6">
       <View className="items-stretch">
-        <View className="mb-12 items-center">
-          <Text className="text-[28px] font-bold text-neutral-900 mb-2 text-center">
-            Welcome
+        {/* Branding */}
+        <View className="mb-16 items-center">
+          <Text className="text-5xl mb-4">🔊</Text>
+          <Text className="text-[32px] font-bold text-neutral-900 mb-2 text-center">
+            BoomBoard
           </Text>
-          <Text className="text-base text-neutral-500 text-center leading-6">
-            Sign in to continue
+          <Text className="text-base text-neutral-400 text-center leading-6">
+            Your sounds, instantly.
           </Text>
         </View>
 
+        {/* Sign In Button */}
         <View className="mt-2.5">
           <Button onPress={onPress} isDisabled={isLoading}>
             <Button.Label>

@@ -15,4 +15,13 @@ export default defineSchema({
     tokenIdentifier: v.string(),
     updatedAt: v.float64(),
   }),
+
+  recordings: defineTable({
+    userId: v.id("users"),
+    name: v.string(),
+    storageId: v.id("_storage"),
+    durationMs: v.number(),
+    fileSize: v.number(),
+    mimeType: v.string(),
+  }).index("by_user", ["userId"]),
 });
