@@ -10,6 +10,7 @@
 
 import type * as healthCheck from "../healthCheck.js";
 import type * as privateData from "../privateData.js";
+import type * as recordings from "../recordings.js";
 import type * as users from "../users.js";
 
 import type {
@@ -21,6 +22,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   healthCheck: typeof healthCheck;
   privateData: typeof privateData;
+  recordings: typeof recordings;
   users: typeof users;
 }>;
 
