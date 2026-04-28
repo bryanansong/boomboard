@@ -6,7 +6,7 @@
 
 import React from "react";
 import { Stack, useRouter } from "expo-router";
-import { View } from "react-native";
+import { Platform, View } from "react-native";
 import { Select, Separator } from "heroui-native";
 
 type SelectOption = {
@@ -61,7 +61,7 @@ export default function OnboardingLayout() {
 	return (
 		<View className="flex-1">
 			<Stack
-				screenOptions={{ headerShown: false, animation: "slide_from_right", gestureEnabled: false }}
+				screenOptions={{ headerShown: false, animation: Platform.OS === "android" ? "none" : "slide_from_right", gestureEnabled: false }}
 			>
 				<Stack.Screen name="index" options={{ animation: "none" }} />
 				<Stack.Screen name="01-welcome" options={{ animation: "none" }} />

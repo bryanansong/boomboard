@@ -72,7 +72,7 @@ export function DatePickerComponent({
     <Modal transparent visible={visible} animationType="none">
       <View className="flex-1 justify-end">
         {/* Backdrop */}
-        <StyledAnimatedView className="absolute inset-0 bg-black/30" style={backdropStyle}>
+        <StyledAnimatedView className="absolute inset-0 bg-black/30" style={backdropStyle} collapsable={false}>
           <Pressable className="flex-1" onPress={onClose} />
         </StyledAnimatedView>
 
@@ -80,6 +80,7 @@ export function DatePickerComponent({
         <StyledAnimatedView
           className="bg-surface rounded-t-2xl pt-3"
           style={[containerStyle, { paddingBottom: Math.max(insets.bottom, 20) }]}
+          collapsable={false}
         >
           <View className="items-center justify-center my-2.5">
             <StyledDateTimePicker

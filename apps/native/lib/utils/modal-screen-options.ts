@@ -1,23 +1,23 @@
 import type { NativeStackNavigationOptions } from '@react-navigation/native-stack';
-import { isIOS, isIOS26OrLater } from './platform';
+import { isIOS, isIOS26OrLater, isAndroid } from './platform';
 
 /**
  * Default screen options for modal screens with native iOS large title header
  * and progressive blur effect on scroll.
- * 
+ *
  * These options provide:
  * - Large title that collapses on scroll (iOS pattern)
  * - Progressive blur effect on the header background
  * - Transparent header that works correctly on both platforms
  * - Automatic handling for iOS 26+ blur behavior
- * 
+ *
  * Use the LargeTitleScrollView or LargeTitleView components from '@/components/ui/large-title-view'
  * which automatically handle the header padding for transparent headers.
- * 
+ *
  * @example
  * ```tsx
  * import { LargeTitleScrollView } from '@/components/ui/large-title-view';
- * 
+ *
  * function MyModalScreen() {
  *   return (
  *     <LargeTitleScrollView contentContainerStyle={{ paddingHorizontal: 20 }}>
@@ -54,16 +54,17 @@ export function getModalScreenOptions(title: string): NativeStackNavigationOptio
     },
     headerBackTitle: '', // Hide previous screen title
     headerBackButtonDisplayMode: 'minimal',
+    animation: isAndroid() ? 'none' : undefined,
     // Remove contentStyle backgroundColor - let ModalScrollView handle it with className
   };
 }
 
 /**
  * Screen options for modal screens without large title but with blurred header.
- * 
+ *
  * Use this for screens that need the blurred header effect but don't want
  * the large title behavior (e.g., account details, forms).
- * 
+ *
  * @example
  * ```tsx
  * <Stack.Screen
@@ -90,6 +91,7 @@ export function getModalScreenOptionsWithoutLargeTitle(title: string): NativeSta
     },
     headerBackTitle: '', // Hide previous screen title
     headerBackButtonDisplayMode: 'minimal',
+    animation: isAndroid() ? 'none' : undefined,
     // Remove contentStyle backgroundColor - let ModalScrollView handle it with className
   };
 }
@@ -122,5 +124,6 @@ export const baseModalScreenOptions: NativeStackNavigationOptions = {
   },
   headerBackTitle: '', // Hide previous screen title
   headerBackButtonDisplayMode: 'minimal',
+  animation: isAndroid() ? 'none' : undefined,
   // Remove contentStyle backgroundColor - let ModalScrollView handle it with className
 };

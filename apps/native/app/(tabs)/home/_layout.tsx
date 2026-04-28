@@ -47,7 +47,7 @@ function SettingsButton() {
  */
 export default function HomeLayout() {
 	return (
-		<Stack screenOptions={{ headerShown: true }}>
+		<Stack screenOptions={{ headerShown: true, animation: Platform.OS === "android" ? "none" : undefined }}>
 			<Stack.Screen
 				name="index"
 				options={getTabScreenOptionsWithHeaderRight("Home", () => (

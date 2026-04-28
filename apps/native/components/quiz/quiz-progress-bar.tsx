@@ -1,9 +1,5 @@
 import React from "react";
 import { View } from "react-native";
-import Animated, {
-	useAnimatedStyle,
-	withSpring,
-} from "react-native-reanimated";
 
 interface QuizProgressBarProps {
 	currentStep: number;
@@ -14,21 +10,13 @@ export function QuizProgressBar({
 	currentStep,
 	totalSteps,
 }: QuizProgressBarProps) {
-	const animatedStyle = useAnimatedStyle(
-		() => ({
-			width: withSpring(`${(currentStep / totalSteps) * 100}%`, {
-				damping: 20,
-				stiffness: 100,
-			}),
-		}),
-		[currentStep, totalSteps],
-	);
+	const widthPercent = `${(currentStep / totalSteps) * 100}%`;
 
 	return (
 		<View className="h-2 w-full overflow-hidden rounded-full bg-gray-200">
-			<Animated.View
+			<View
 				className="h-full rounded-full bg-blue-500"
-				style={animatedStyle}
+				style={{ width: widthPercent as `${number}%` }}
 			/>
 		</View>
 	);

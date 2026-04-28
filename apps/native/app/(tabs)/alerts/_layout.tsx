@@ -1,4 +1,5 @@
 import { Stack } from "expo-router";
+import { Platform } from "react-native";
 import { getTabScreenOptions } from "@/lib/utils/tab-screen-options";
 
 /**
@@ -13,7 +14,7 @@ import { getTabScreenOptions } from "@/lib/utils/tab-screen-options";
  */
 export default function AlertsLayout() {
   return (
-    <Stack screenOptions={{ headerShown: true }}>
+    <Stack screenOptions={{ headerShown: true, animation: Platform.OS === "android" ? "none" : undefined }}>
       <Stack.Screen name="index" options={getTabScreenOptions("Alerts")} />
     </Stack>
   );

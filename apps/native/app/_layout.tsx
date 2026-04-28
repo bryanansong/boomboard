@@ -7,7 +7,7 @@ import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { HeroUINativeProvider } from "heroui-native";
 import { useEffect } from "react";
-import { ActivityIndicator, View } from "react-native";
+import { ActivityIndicator, Platform, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 
@@ -40,7 +40,7 @@ function StackLayout() {
 
   return (
     <>
-      <Stack screenOptions={{ headerShown: false }}>
+      <Stack screenOptions={{ headerShown: false, animation: Platform.OS === "android" ? "none" : undefined }}>
         {/* Auth Screen: Only accessible if NOT signed in AND onboarding IS complete */}
         <Stack.Protected guard={!isSignedIn && isOnboardingComplete}>
           <Stack.Screen name="(auth)" />

@@ -1,9 +1,8 @@
 import { LinearGradient } from "expo-linear-gradient";
-import { RadioGroup, ScrollShadow } from "heroui-native";
+import { RadioGroup } from "heroui-native";
 import React, { useCallback, useState } from "react";
 import { ScrollView, Text, View, KeyboardAvoidingView, Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 import {
 	DevModeQuizControls,
 	QuizOption,
@@ -137,39 +136,34 @@ export default function QuizScreen() {
 					/>
 				</View>
 
-				<Animated.View
-					key={currentQuestion.id}
-					entering={FadeIn.duration(400).delay(100)}
-					exiting={FadeOut.duration(200)}
-					className="flex-1"
-				>
-					{/* Question Header */}
-					<View className="mt-6 mb-2 px-6 items-center gap-2">
-						<Text className="font-bold text-foreground text-3xl">
-							{`Question #${currentQuestion.id}`}
-						</Text>
-						<Text className="text-center text-xl text-foreground">
-							{currentQuestion.question}
-						</Text>
-					</View>
+			<View key={currentQuestion.id} className="flex-1">
+				{/* Question Header */}
+				<View className="mt-6 mb-2 px-6 items-center gap-2">
+					<Text className="font-bold text-foreground text-3xl">
+						{`Question #${currentQuestion.id}`}
+					</Text>
+					<Text className="text-center text-xl text-foreground">
+						{currentQuestion.question}
+					</Text>
+				</View>
 
-					{/* Scrollable Options / Input Section */}
-					<ScrollShadow LinearGradientComponent={LinearGradient} className="flex-1">
-						<ScrollView className="px-6" showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-							<View className="py-4">
-								<RadioGroup
-									value={selectedAnswer || ""}
-									onValueChange={(val: string) => handleSelectOption(val)}
-									className="gap-3"
-								>
-									{currentQuestion.options?.map((option) => (
-										<QuizOption key={option} label={option} value={option} />
-									))}
-								</RadioGroup>
-							</View>
-						</ScrollView>
-					</ScrollShadow>
-				</Animated.View>
+				{/* Scrollable Options / Input Section */}
+				<View className="flex-1">
+					<ScrollView className="px-6" showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+						<View className="py-4">
+							<RadioGroup
+								value={selectedAnswer || ""}
+								onValueChange={(val: string) => handleSelectOption(val)}
+								className="gap-3"
+							>
+								{currentQuestion.options?.map((option) => (
+									<QuizOption key={option} label={option} value={option} />
+								))}
+							</RadioGroup>
+						</View>
+					</ScrollView>
+				</View>
+			</View>
 
 				{/* Fixed Footer Section with Buttons */}
 				<View
