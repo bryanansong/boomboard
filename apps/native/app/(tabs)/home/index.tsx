@@ -53,14 +53,14 @@ function RecordingItem({ recording, isPlaying, progress, onPlay, onPause, onDele
 
 	return (
 		<View className="mb-3">
-			<View className="bg-[#1C1C1E] rounded-[24px] p-4 flex-row items-center">
+			<View className="bg-[#1C1C1E] rounded-[24px] p-3.5 pr-4 flex-row items-center">
 				{/* Play/Pause Button */}
 				<Pressable onPress={handlePress} className="relative mr-4 active:scale-95">
 					{isPlaying && (
 						<View className="absolute -inset-1.5 rounded-full bg-[#DE4045]/20 animate-pulse" />
 					)}
 					<View
-						className={`items-center justify-center w-[52px] h-[52px] rounded-full ${
+						className={`items-center justify-center w-[48px] h-[48px] rounded-full ${
 							isPlaying ? "bg-[#DE4045]" : "bg-[#2C2C2E]"
 						}`}
 					>
@@ -78,27 +78,16 @@ function RecordingItem({ recording, isPlaying, progress, onPlay, onPause, onDele
 				</Pressable>
 
 				{/* Recording Info */}
-				<View className="flex-1 justify-center">
+				<View className="flex-1 justify-center ml-1">
 					<Text
-						className="font-medium text-white text-[16px] mb-2 tracking-wide"
+						className="font-semibold text-white text-[15px] mb-1 tracking-tight"
 						numberOfLines={1}
 					>
 						{recording.name}
 					</Text>
-					<View className="flex-row items-center gap-2">
-						<View className="bg-[#2C2C2E] px-2.5 py-1 rounded-md flex-row items-center gap-1.5">
-							<Clock size={10} color="#8E8E93" />
-							<Text className="text-[#8E8E93] text-[10px] font-semibold tracking-wider">
-								{formatDuration(recording.durationMs)}
-							</Text>
-						</View>
-						<View className="bg-[#2C2C2E] px-2.5 py-1 rounded-md flex-row items-center gap-1.5">
-							<HardDrive size={10} color="#8E8E93" />
-							<Text className="text-[#8E8E93] text-[10px] font-semibold tracking-wider">
-								{formatFileSize(recording.fileSize)}
-							</Text>
-						</View>
-					</View>
+					<Text className="text-[#8E8E93] text-[12px] font-medium tracking-wide">
+						{formatDuration(recording.durationMs)}
+					</Text>
 
                     {/* Playback Progress Bar */}
                     {(isPlaying || progress > 0) && (
