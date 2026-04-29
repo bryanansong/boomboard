@@ -1,12 +1,10 @@
 import { useState, useCallback, useEffect } from "react";
-import { Text, View, Pressable, ActivityIndicator } from "react-native";
+import { Text, View, Pressable, ActivityIndicator, SafeAreaView, ScrollView } from "react-native";
 import { useQuery } from "convex/react";
 import { useAudioPlayer, useAudioPlayerStatus } from "expo-audio";
-import { TabScreenScrollView } from "@/components/ui/tab-screen-view";
 import { useTabFocusHaptic } from "@/lib/hooks";
 import { api } from "@boomboard/backend/convex/_generated/api";
-import { Play, Pause, Music, Clock, HardDrive, AudioWaveform } from "lucide-react-native";
-import { useCSSVariable } from "uniwind";
+import { Play, Pause, Clock, HardDrive, AudioWaveform, Search, SlidersHorizontal } from "lucide-react-native";
 
 function formatDuration(ms: number): string {
 	const totalSeconds = Math.floor(ms / 1000);
@@ -36,8 +34,6 @@ interface RecordingItemProps {
 }
 
 function RecordingItem({ recording, isPlaying, onPlay, onPause, index }: RecordingItemProps) {
-	const mutedColor = (useCSSVariable("--muted") ?? "#8E8E93") as string;
-
 	const handlePress = useCallback(() => {
 		if (isPlaying) {
 			onPause();
@@ -50,106 +46,86 @@ function RecordingItem({ recording, isPlaying, onPlay, onPause, index }: Recordi
 		<Pressable
 			onPress={handlePress}
 			className="mb-3 active:scale-[0.98]"
-			style={{ borderCurve: "continuous" }}
 		>
-			<View
-				className="flex-row items-center p-4 bg-surface dark:bg-zinc-800/80 rounded-2xl border border-border/30 dark:border-zinc-700/50"
-				style={{
-					borderCurve: "continuous",
-					boxShadow: "0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04)",
-				}}
-			>
+			<View className="bg-[#1C1C1E] rounded-[24px] p-4 flex-row items-center">
 				{/* Play/Pause Button */}
 				<View className="relative mr-4">
-					{/* Subtle glow ring when playing */}
 					{isPlaying && (
-						<View
-							className="absolute -inset-1 rounded-full bg-primary/20 dark:bg-primary/30 animate-pulse"
-							style={{ borderCurve: "continuous" }}
-						/>
+						<View className="absolute -inset-1.5 rounded-full bg-[#DE4045]/20 animate-pulse" />
 					)}
 					<View
-						className={`items-center justify-center w-12 h-12 rounded-full ${
-							isPlaying
-								? "bg-primary"
-								: "bg-zinc-100 dark:bg-zinc-700"
+						className={`items-center justify-center w-[52px] h-[52px] rounded-full ${
+							isPlaying ? "bg-[#DE4045]" : "bg-[#2C2C2E]"
 						}`}
-						style={{ borderCurve: "continuous" }}
 					>
 						{isPlaying ? (
-							<Pause size={18} color="white" fill="white" />
+							<Pause size={20} color="#FFFFFF" fill="#FFFFFF" />
 						) : (
 							<Play
-								size={18}
-								color={mutedColor}
-								fill={mutedColor}
-								style={{ marginLeft: 2 }}
+								size={20}
+								color="#A2D5F2"
+								fill="#A2D5F2"
+								style={{ marginLeft: 3 }}
 							/>
 						)}
 					</View>
 				</View>
 
 				{/* Recording Info */}
-				<View className="flex-1">
+				<View className="flex-1 justify-center">
 					<Text
-						className="font-semibold text-foreground text-[15px] mb-1.5 tracking-tight"
+						className="font-medium text-white text-[16px] mb-2 tracking-wide"
 						numberOfLines={1}
 					>
 						{recording.name}
 					</Text>
-					<View className="flex-row items-center gap-4">
-						<View className="flex-row items-center gap-1.5">
-							<Clock size={12} color={mutedColor} />
-							<Text className="text-muted text-xs font-medium">
+					<View className="flex-row items-center gap-2">
+						<View className="bg-[#2C2C2E] px-2.5 py-1 rounded-md flex-row items-center gap-1.5">
+							<Clock size={10} color="#8E8E93" />
+							<Text className="text-[#8E8E93] text-[10px] font-semibold tracking-wider">
 								{formatDuration(recording.durationMs)}
 							</Text>
 						</View>
-						<View className="flex-row items-center gap-1.5">
-							<HardDrive size={12} color={mutedColor} />
-							<Text className="text-muted text-xs font-medium">
+						<View className="bg-[#2C2C2E] px-2.5 py-1 rounded-md flex-row items-center gap-1.5">
+							<HardDrive size={10} color="#8E8E93" />
+							<Text className="text-[#8E8E93] text-[10px] font-semibold tracking-wider">
 								{formatFileSize(recording.fileSize)}
 							</Text>
 						</View>
 					</View>
 				</View>
 
-				{/* Subtle waveform indicator for playing state */}
-				{isPlaying && (
-					<View className="flex-row items-end gap-0.5 mr-1">
-						{[12, 18, 10, 16, 8].map((h, i) => (
+				{/* Waveform indicator when playing */}
+				{isPlaying ? (
+					<View className="flex-row items-end gap-[3px] ml-2 h-6">
+						{[10, 16, 12, 18, 14, 8].map((h, i) => (
 							<View
 								key={i}
-								className="w-[3px] rounded-full bg-primary animate-pulse"
-								style={{ height: h }}
+								className="w-[3px] rounded-full bg-[#DE4045] animate-pulse"
+								style={{ height: h, animationDelay: `${i * 100}ms` } as any}
 							/>
 						))}
 					</View>
-				)}
+				) : (
+                    <View className="flex-row items-center justify-center w-8 h-8 rounded-full bg-[#121212]/50 border border-[#2C2C2E]">
+                        <Text className="text-[#8E8E93] text-lg font-bold" style={{ marginTop: -8 }}>...</Text>
+                    </View>
+                )}
 			</View>
 		</Pressable>
 	);
 }
 
-/**
- * Sound Library screen with native iOS large title header.
- *
- * Displays all recordings by the current user with playback controls.
- */
 export default function SoundLibraryScreen() {
 	useTabFocusHaptic();
 
-	const mutedColor = (useCSSVariable("--muted") ?? "#8E8E93") as string;
-
-	// Fetch recordings from Convex
 	const recordings = useQuery(api.recordings.list) ?? [];
 	const isLoading = recordings === undefined;
 
-	// Audio player for playback
 	const player = useAudioPlayer(null);
 	const playerStatus = useAudioPlayerStatus(player);
 	const [currentUrl, setCurrentUrl] = useState<string | null>(null);
 
-	// Reset current track when it finishes so it can be replayed
 	useEffect(() => {
 		if (playerStatus.didJustFinish) {
 			setCurrentUrl(null);
@@ -159,7 +135,6 @@ export default function SoundLibraryScreen() {
 	const handlePlay = useCallback(
 		(url: string) => {
 			if (currentUrl === url) {
-				// Same track — check if it finished and needs to reload from start
 				const isFinished =
 					playerStatus.duration > 0 &&
 					playerStatus.currentTime >= playerStatus.duration - 0.1;
@@ -168,7 +143,6 @@ export default function SoundLibraryScreen() {
 				}
 				player.play();
 			} else {
-				// Load and play new track
 				player.replace(url);
 				player.play();
 				setCurrentUrl(url);
@@ -182,88 +156,89 @@ export default function SoundLibraryScreen() {
 	}, [player]);
 
 	return (
-		<TabScreenScrollView contentContainerClassName="px-5">
-			{/* Header Section */}
-			<View className="mb-5">
-				<View className="flex-row items-center justify-between mb-1">
-					<Text className="font-semibold text-[13px] text-muted uppercase tracking-wider">
+		<SafeAreaView className="flex-1 bg-[#121212]">
+			<View className="flex-row items-center justify-between px-5 pt-4 pb-2 mb-4">
+				<View>
+					<Text className="text-[#8E8E93] text-[12px] font-bold tracking-widest uppercase mb-1">
+						Library
+					</Text>
+					<Text className="text-white text-[32px] font-semibold tracking-tighter">
 						My Sounds
 					</Text>
-					{!isLoading && recordings.length > 0 && (
-						<View
-							className="px-2.5 py-1 rounded-full bg-primary/10 dark:bg-primary/20"
-							style={{ borderCurve: "continuous" }}
-						>
-							<Text className="text-primary text-xs font-bold">
-								{recordings.length}
-							</Text>
-						</View>
-					)}
 				</View>
-				<Text className="text-sm text-muted">
-					{isLoading
-						? "Loading your library..."
-						: recordings.length === 0
-							? "Start recording to build your library"
-							: `${recordings.length} sound${recordings.length !== 1 ? "s" : ""} in your library`}
-				</Text>
+				<View className="flex-row items-center gap-3">
+                    <Pressable className="w-10 h-10 rounded-full bg-[#1C1C1E] items-center justify-center">
+                        <Search size={18} color="#8E8E93" />
+                    </Pressable>
+                    <Pressable className="w-10 h-10 rounded-full bg-[#1C1C1E] items-center justify-center">
+                        <SlidersHorizontal size={18} color="#8E8E93" />
+                    </Pressable>
+				</View>
 			</View>
 
-			{/* Loading State */}
-			{isLoading && (
-				<View className="items-center py-20">
-					<ActivityIndicator size="large" color="var(--color-primary)" />
-					<Text className="text-muted text-sm mt-4">
-						Loading sounds...
-					</Text>
-				</View>
-			)}
+            <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
+                {/* Stats Header */}
+                {!isLoading && recordings.length > 0 && (
+                    <View className="flex-row items-center justify-between mb-6 px-1">
+                        <Text className="text-[#8E8E93] text-[14px] font-medium">
+                            {recordings.length} {recordings.length === 1 ? 'Recording' : 'Recordings'}
+                        </Text>
+                        <View className="flex-row items-center gap-2">
+                            <Text className="text-[#A2D5F2] text-[13px] font-semibold">Date</Text>
+                            <View className="w-4 h-4 rounded-full bg-[#2C2C2E] items-center justify-center">
+                                <Text className="text-[#8E8E93] text-[8px] font-bold">▼</Text>
+                            </View>
+                        </View>
+                    </View>
+                )}
 
-			{/* Empty State */}
-			{!isLoading && recordings.length === 0 && (
-				<View className="items-center py-16">
-					{/* Decorative icon with gradient ring */}
-					<View className="relative mb-6">
-						<View
-							className="absolute -inset-3 rounded-full bg-primary/5 dark:bg-primary/10"
-							style={{ borderCurve: "continuous" }}
-						/>
-						<View
-							className="items-center justify-center w-24 h-24 rounded-full bg-zinc-100/80 dark:bg-zinc-800/80 border border-border/40 dark:border-zinc-700/50"
-							style={{
-								borderCurve: "continuous",
-								boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
-							}}
-						>
-							<AudioWaveform size={36} color={mutedColor} strokeWidth={1.5} />
-						</View>
-					</View>
-					<Text className="mb-2 font-bold text-foreground text-xl tracking-tight">
-						No sounds yet
-					</Text>
-					<Text className="text-center text-[15px] text-muted px-12 leading-[22px]">
-						Head over to the Record tab to capture your first sound.
-					</Text>
-				</View>
-			)}
+                {/* Loading State */}
+                {isLoading && (
+                    <View className="items-center py-32">
+                        <ActivityIndicator size="large" color="#A2D5F2" />
+                        <Text className="text-[#8E8E93] text-sm mt-6 font-medium">
+                            Loading your sounds...
+                        </Text>
+                    </View>
+                )}
 
-			{/* Recordings List */}
-			{!isLoading && recordings.length > 0 && (
-				<View>
-					{recordings.map((recording, index) => (
-						<RecordingItem
-							key={recording._id}
-							recording={recording}
-							isPlaying={
-								playerStatus.playing && currentUrl === recording.url
-							}
-							onPlay={handlePlay}
-							onPause={handlePause}
-							index={index}
-						/>
-					))}
-				</View>
-			)}
-		</TabScreenScrollView>
+                {/* Empty State */}
+                {!isLoading && recordings.length === 0 && (
+                    <View className="items-center justify-center py-24 flex-1">
+                        <View className="relative mb-8 items-center justify-center">
+                            <View className="absolute w-32 h-32 rounded-full border border-[#2C2C2E]/50" />
+                            <View className="absolute w-24 h-24 rounded-full border border-[#2C2C2E]" />
+                            <View className="items-center justify-center w-16 h-16 rounded-full bg-[#1C1C1E]">
+                                <AudioWaveform size={24} color="#8E8E93" />
+                            </View>
+                        </View>
+                        <Text className="mb-3 font-semibold text-white text-[22px] tracking-tight">
+                            No sounds yet
+                        </Text>
+                        <Text className="text-center text-[15px] text-[#8E8E93] px-10 leading-[24px]">
+                            Capture your first recording to build your library. It will appear here.
+                        </Text>
+                    </View>
+                )}
+
+                {/* Recordings List */}
+                {!isLoading && recordings.length > 0 && (
+                    <View>
+                        {recordings.map((recording, index) => (
+                            <RecordingItem
+                                key={recording._id}
+                                recording={recording}
+                                isPlaying={
+                                    playerStatus.playing && currentUrl === recording.url
+                                }
+                                onPlay={handlePlay}
+                                onPause={handlePause}
+                                index={index}
+                            />
+                        ))}
+                    </View>
+                )}
+            </ScrollView>
+		</SafeAreaView>
 	);
 }

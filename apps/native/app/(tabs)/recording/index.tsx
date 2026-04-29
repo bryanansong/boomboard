@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from "react";
-import { Text, View, Pressable, Alert, ActivityIndicator } from "react-native";
+import { Text, View, Pressable, Alert, ActivityIndicator, TextInput, SafeAreaView } from "react-native";
 import { useMutation } from "convex/react";
 import {
 	useAudioRecorder,
@@ -10,35 +10,25 @@ import {
 } from "expo-audio";
 import { uploadAsync, FileSystemUploadType } from "expo-file-system/legacy";
 import { router } from "expo-router";
-import { useCSSVariable } from "uniwind";
 
-import { TabScreenScrollView } from "@/components/ui/tab-screen-view";
 import { useTabFocusHaptic, useHaptic } from "@/lib/hooks";
 import { api } from "@boomboard/backend/convex/_generated/api";
-import { Mic, Square, X, Check, RotateCcw, AudioWaveform } from "lucide-react-native";
+import { Mic, Square, X, Check, RotateCcw, AudioWaveform, Maximize, Sun, ChevronLeft, Scissors, Share, Lock, Info } from "lucide-react-native";
 
 type RecordingPhase = "idle" | "recording" | "saving" | "preview";
 
-function formatDuration(ms: number): string {
+// Helper for formatting duration to match the image "0h 00m 40s"
+function formatDurationDetailed(ms: number) {
 	const totalSeconds = Math.floor(ms / 1000);
-	const minutes = Math.floor(totalSeconds / 60);
-	const seconds = totalSeconds % 60;
-	return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+	const h = Math.floor(totalSeconds / 3600);
+	const m = Math.floor((totalSeconds % 3600) / 60);
+	const s = totalSeconds % 60;
+	return { h, m, s };
 }
 
-/**
- * Recording screen with native iOS large title header.
- *
- * Uses expo-audio for recording and Convex for storage.
- * Flow: idle -> recording -> preview -> saving -> idle
- */
 export default function RecordingScreen() {
 	useTabFocusHaptic();
 	const { medium, success, error } = useHaptic();
-
-	const mutedColor = (useCSSVariable("--muted") ?? "#8E8E93") as string;
-	const primaryColor = (useCSSVariable("--primary") ?? "#007AFF") as string;
-	const foregroundColor = (useCSSVariable("--foreground") ?? "#000000") as string;
 
 	const [phase, setPhase] = useState<RecordingPhase>("idle");
 	const [recordingName, setRecordingName] = useState("");
@@ -47,24 +37,37 @@ export default function RecordingScreen() {
 	const [elapsedTime, setElapsedTime] = useState(0);
 	const timerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+	// Simulated waveform
+	const [waveform, setWaveform] = useState<number[]>(Array(40).fill(10));
+
 	// Convex mutations
 	const generateUploadUrl = useMutation(api.recordings.generateUploadUrl);
 	const createRecording = useMutation(api.recordings.create);
 
 	// Audio recorder setup with high quality presets
 	const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
-	const recorderState = useAudioRecorderState(recorder, 100);
+	// We keep this to ensure the recorder state is tracked if needed internally
+	useAudioRecorderState(recorder, 100);
 
-	// Timer effect for recording duration
+	// Timer effect for recording duration and simulated waveform
 	useEffect(() => {
 		if (phase === "recording") {
 			timerIntervalRef.current = setInterval(() => {
 				setElapsedTime(Date.now() - recordingStartTimeRef.current);
+				setWaveform((prev) => {
+					// Simulate active audio waveform metering
+					const newWave = [...prev.slice(1), Math.random() * 35 + 10];
+					return newWave;
+				});
 			}, 100);
 		} else {
 			if (timerIntervalRef.current) {
 				clearInterval(timerIntervalRef.current);
 				timerIntervalRef.current = null;
+			}
+			// Reset waveform if not in preview
+			if (phase === "idle") {
+				setWaveform(Array(40).fill(10));
 			}
 		}
 
@@ -75,7 +78,6 @@ export default function RecordingScreen() {
 		};
 	}, [phase]);
 
-	// Request microphone permission and configure audio mode
 	const ensurePermissions = useCallback(async () => {
 		const { granted } = await requestRecordingPermissionsAsync();
 		if (!granted) {
@@ -87,7 +89,6 @@ export default function RecordingScreen() {
 			return false;
 		}
 
-		// Configure audio mode for recording
 		await setAudioModeAsync({
 			allowsRecording: true,
 			playsInSilentMode: true,
@@ -97,7 +98,6 @@ export default function RecordingScreen() {
 		return true;
 	}, []);
 
-	// Start recording
 	const handleStartRecording = useCallback(async () => {
 		const hasPermission = await ensurePermissions();
 		if (!hasPermission) return;
@@ -115,13 +115,11 @@ export default function RecordingScreen() {
 		}
 	}, [ensurePermissions, recorder, medium]);
 
-	// Stop recording and move to preview phase
 	const handleStopRecording = useCallback(async () => {
 		try {
 			await recorder.stop();
 			medium();
 
-			// Get the recording URI
 			const uri = recorder.uri;
 			if (uri) {
 				setLastRecordingUri(uri);
@@ -136,7 +134,6 @@ export default function RecordingScreen() {
 		}
 	}, [recorder, medium]);
 
-	// Cancel recording (discard)
 	const handleCancelRecording = useCallback(() => {
 		if (phase === "recording") {
 			recorder.stop().catch(() => {});
@@ -147,18 +144,14 @@ export default function RecordingScreen() {
 		setRecordingName("");
 	}, [phase, recorder]);
 
-	// Save recording to Convex
 	const handleSaveRecording = useCallback(async () => {
 		if (!lastRecordingUri) return;
 
 		setPhase("saving");
 
 		try {
-			// Step 1: Generate upload URL from Convex
 			const uploadUrl = await generateUploadUrl();
 
-			// Step 2: Upload the local audio file using expo-file-system
-			// (React Native fetch doesn't handle Blob uploads from file URIs well)
 			const uploadResult = await uploadAsync(
 				uploadUrl,
 				lastRecordingUri,
@@ -177,8 +170,7 @@ export default function RecordingScreen() {
 
 			const { storageId } = JSON.parse(uploadResult.body);
 
-			// Step 3: Create the recording document in Convex
-			const name = recordingName.trim() || `Recording ${new Date().toLocaleString()}`;
+			const name = recordingName.trim() || `new_voice_${new Date().getFullYear()}.mp3`;
 			await createRecording({
 				storageId,
 				name,
@@ -190,13 +182,11 @@ export default function RecordingScreen() {
 				{
 					text: "OK",
 					onPress: () => {
-						// Navigate to library to see the saved recording
 						router.push("/(tabs)/home" as never);
 					},
 				},
 			]);
 
-			// Reset state
 			setPhase("idle");
 			setElapsedTime(0);
 			setLastRecordingUri(null);
@@ -215,216 +205,165 @@ export default function RecordingScreen() {
 		}
 	}, [lastRecordingUri, generateUploadUrl, createRecording, recordingName, elapsedTime, success, error]);
 
-	// Render idle state
-	const renderIdle = () => (
-		<View className="flex-1 items-center justify-center py-50">
-			{/* Decorative rings behind mic icon */}
-			<View className="relative items-center justify-center mb-8">
-				<View
-					className="absolute w-44 h-44 rounded-full border border-primary/10 dark:border-primary/15"
-					style={{ borderCurve: "continuous" }}
-				/>
-				<View
-					className="absolute w-36 h-36 rounded-full border border-primary/15 dark:border-primary/20"
-					style={{ borderCurve: "continuous" }}
-				/>
-				<View
-					className="items-center justify-center w-28 h-28 rounded-full bg-primary"
-					style={{
-						borderCurve: "continuous",
-						boxShadow: "0 8px 32px rgba(0, 122, 255, 0.25)",
-					}}
-				>
-					<Mic size={44} color="white" strokeWidth={1.8} />
-				</View>
-			</View>
+	// Button configuration logic
+	const getLeftButton = () => {
+		if (phase === "idle") return { icon: <Square size={20} color="#8E8E93" fill="#8E8E93" />, text: "STOP", disabled: true, onPress: () => {} };
+		if (phase === "recording") return { icon: <Square size={20} color="#FFFFFF" fill="#FFFFFF" />, text: "STOP", disabled: false, onPress: handleStopRecording };
+		if (phase === "preview") return { icon: <RotateCcw size={20} color="#FFFFFF" />, text: "RETAKE", disabled: false, onPress: handleCancelRecording };
+		if (phase === "saving") return { icon: <Square size={20} color="#8E8E93" fill="#8E8E93" />, text: "STOP", disabled: true, onPress: () => {} };
+		return { icon: <Square size={20} color="#8E8E93" fill="#8E8E93" />, text: "", disabled: true, onPress: () => {} };
+	};
 
-			<Text className="mb-2 font-bold text-[24px] text-foreground tracking-tight">
-				Ready to Record
-			</Text>
-			<Text className="px-12 text-center text-[15px] text-muted leading-[22px]">
-				Capture a new sound for your library. Tap below to begin.
-			</Text>
+	const getRightButton = () => {
+		if (phase === "idle") return { icon: <View className="w-4 h-4 bg-[#DE4045] rounded-full" />, text: "RECORD", color: "bg-transparent border-2 border-[#DE4045]", onPress: handleStartRecording };
+		if (phase === "recording") return { 
+            icon: (
+                <View className="flex-row items-center gap-1.5">
+                    <View className="w-1.5 h-4 bg-[#DE4045] rounded-sm" />
+                    <View className="w-1.5 h-4 bg-[#DE4045] rounded-sm" />
+                </View>
+            ), 
+            text: "REC / PAUSE", 
+            color: "bg-transparent border-2 border-[#DE4045]", 
+            onPress: handleCancelRecording // Functionally cancel, visually looks like pause/rec
+        };
+		if (phase === "preview") return { icon: <Check size={20} color="#9FD4F4" />, text: "SAVE", color: "bg-transparent border-2 border-[#9FD4F4]", onPress: handleSaveRecording };
+		if (phase === "saving") return { icon: <ActivityIndicator color="#9FD4F4" />, text: "SAVING...", color: "bg-transparent border-2 border-[#9FD4F4]", onPress: () => {} };
+		return { icon: null, text: "", color: "", onPress: () => {} };
+	};
 
-			<Pressable
-				onPress={handleStartRecording}
-				className="mt-10 px-10 py-4 bg-primary rounded-full active:scale-[0.97]"
-				style={{
-					borderCurve: "continuous",
-					boxShadow: "0 4px 16px rgba(0, 122, 255, 0.3)",
-				}}
-			>
-				<View className="flex-row items-center gap-2.5">
-					<Mic size={20} color="white" strokeWidth={2} />
-					<Text className="text-white font-semibold text-[17px]">Start Recording</Text>
-				</View>
-			</Pressable>
-		</View>
-	);
-
-	// Render recording state with timer and controls
-	const renderRecording = () => (
-		<View className="flex-1 items-center justify-center py-50">
-			{/* Recording indicator with pulsing rings */}
-			<View className="relative items-center justify-center mb-10">
-				<View
-					className="absolute w-44 h-44 rounded-full bg-red-500/5 dark:bg-red-500/10 animate-pulse"
-					style={{ borderCurve: "continuous" }}
-				/>
-				<View
-					className="absolute w-36 h-36 rounded-full bg-red-500/10 dark:bg-red-500/15 animate-pulse"
-					style={{ borderCurve: "continuous" }}
-				/>
-				<View
-					className="items-center justify-center w-28 h-28 rounded-full bg-red-500"
-					style={{
-						borderCurve: "continuous",
-						boxShadow: "0 8px 32px rgba(239, 68, 68, 0.35)",
-					}}
-				>
-					{/* Minimal recording dot */}
-					<View
-						className="w-8 h-8 rounded-lg bg-white animate-pulse"
-						style={{ borderCurve: "continuous" }}
-					/>
-				</View>
-			</View>
-
-			{/* Timer display */}
-			<Text
-				className="text-[52px] font-bold text-foreground mb-2 tracking-tight"
-				style={{ fontVariant: ["tabular-nums"] }}
-			>
-				{formatDuration(elapsedTime)}
-			</Text>
-			<View className="flex-row items-center gap-2 mb-12">
-				<View className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-				<Text className="text-[15px] text-muted font-medium">Recording</Text>
-			</View>
-
-			{/* Recording controls */}
-			<View className="flex-row items-center gap-8">
-				{/* Cancel button */}
-				<Pressable
-					onPress={handleCancelRecording}
-					className="items-center justify-center w-16 h-16 rounded-full bg-zinc-100 dark:bg-zinc-800 border border-border/40 dark:border-zinc-700/50 active:scale-[0.93]"
-					style={{
-						borderCurve: "continuous",
-						boxShadow: "0 1px 3px rgba(0, 0, 0, 0.06)",
-					}}
-				>
-					<X size={22} color={foregroundColor} strokeWidth={2} />
-				</Pressable>
-
-				{/* Stop/Save button */}
-				<Pressable
-					onPress={handleStopRecording}
-					className="items-center justify-center w-20 h-20 rounded-full bg-primary active:scale-[0.93]"
-					style={{
-						borderCurve: "continuous",
-						boxShadow: "0 6px 24px rgba(0, 122, 255, 0.35)",
-					}}
-				>
-					<Square size={26} color="white" fill="white" />
-				</Pressable>
-			</View>
-		</View>
-	);
-
-	// Render preview state (after recording, before saving)
-	const renderPreview = () => (
-		<View className="flex-1 items-center justify-center py-50">
-			{/* Success indicator */}
-			<View className="relative items-center justify-center mb-8">
-				<View
-					className="absolute w-36 h-36 rounded-full bg-primary/5 dark:bg-primary/10"
-					style={{ borderCurve: "continuous" }}
-				/>
-				<View
-					className="items-center justify-center w-24 h-24 rounded-full bg-zinc-100/80 dark:bg-zinc-800/80 border-2 border-primary/60 dark:border-primary/50"
-					style={{
-						borderCurve: "continuous",
-						boxShadow: "0 2px 12px rgba(0, 122, 255, 0.12)",
-					}}
-				>
-					<Check size={36} color={primaryColor} strokeWidth={2.5} />
-				</View>
-			</View>
-
-			<Text className="mb-2 font-bold text-[24px] text-foreground tracking-tight">
-				Recording Complete
-			</Text>
-
-			{/* Duration badge */}
-			<View
-				className="flex-row items-center gap-2 px-4 py-2 bg-zinc-100/80 dark:bg-zinc-800/80 rounded-full border border-border/30 dark:border-zinc-700/50 mb-2"
-				style={{ borderCurve: "continuous" }}
-			>
-				<AudioWaveform size={14} color={mutedColor} strokeWidth={2} />
-				<Text className="text-[15px] text-muted font-medium" style={{ fontVariant: ["tabular-nums"] }}>
-					{formatDuration(elapsedTime)}
-				</Text>
-			</View>
-
-			{/* Action buttons */}
-			<View className="flex-row items-center gap-4 mt-8">
-				<Pressable
-					onPress={handleCancelRecording}
-					className="items-center justify-center px-6 py-3.5 rounded-full bg-zinc-100 dark:bg-zinc-800 border border-border/40 dark:border-zinc-700/50 active:scale-[0.97]"
-					style={{
-						borderCurve: "continuous",
-						boxShadow: "0 1px 3px rgba(0, 0, 0, 0.06)",
-					}}
-				>
-					<View className="flex-row items-center gap-2">
-						<RotateCcw size={16} color={foregroundColor} strokeWidth={2} />
-						<Text className="text-foreground font-semibold text-[15px]">Retake</Text>
-					</View>
-				</Pressable>
-
-				<Pressable
-					onPress={handleSaveRecording}
-					className="items-center justify-center px-8 py-3.5 rounded-full bg-primary active:scale-[0.97]"
-					style={{
-						borderCurve: "continuous",
-						boxShadow: "0 4px 16px rgba(0, 122, 255, 0.3)",
-					}}
-				>
-					<View className="flex-row items-center gap-2">
-						<Check size={16} color="white" strokeWidth={2.5} />
-						<Text className="text-white font-semibold text-[15px]">Save</Text>
-					</View>
-				</Pressable>
-			</View>
-		</View>
-	);
-
-	// Render saving state
-	const renderSaving = () => (
-		<View className="flex-1 items-center justify-center py-50">
-			{/* Animated upload indicator */}
-			<View className="relative items-center justify-center mb-8">
-				<View
-					className="absolute w-28 h-28 rounded-full border-2 border-primary/20 dark:border-primary/30 animate-pulse"
-					style={{ borderCurve: "continuous" }}
-				/>
-				<ActivityIndicator size="large" color={primaryColor} />
-			</View>
-			<Text className="mb-2 font-bold text-[22px] text-foreground tracking-tight">
-				Saving...
-			</Text>
-			<Text className="px-12 text-center text-[15px] text-muted leading-[22px]">
-				Uploading your recording to the cloud. This may take a moment.
-			</Text>
-		</View>
-	);
+	const leftBtn = getLeftButton();
+	const rightBtn = getRightButton();
+	const time = formatDurationDetailed(elapsedTime);
 
 	return (
-		<TabScreenScrollView contentContainerClassName="px-5">
-			{phase === "idle" && renderIdle()}
-			{phase === "recording" && renderRecording()}
-			{phase === "preview" && renderPreview()}
-			{phase === "saving" && renderSaving()}
-		</TabScreenScrollView>
+		<SafeAreaView className="flex-1 bg-[#121212]">
+            <View className="flex-1 px-5 pt-4 pb-2">
+                {/* Header */}
+                <View className="flex-row items-center justify-between mb-8">
+                    <View className="flex-row items-center flex-1">
+                        <Pressable onPress={() => router.push("/(tabs)/home" as never)} className="mr-3 p-1 active:opacity-50">
+                            <ChevronLeft color="#FFFFFF" size={24} />
+                        </Pressable>
+                        {phase === "preview" ? (
+                            <TextInput 
+                                value={recordingName}
+                                onChangeText={setRecordingName}
+                                placeholder="new_voice2022.mp3"
+                                placeholderTextColor="#8E8E93"
+                                className="text-white text-[17px] font-medium flex-1 h-10"
+                                autoFocus
+                            />
+                        ) : (
+                            <Text className="text-white text-[17px] font-medium flex-1" numberOfLines={1}>
+                                {recordingName || "new_voice2022.mp3"}
+                            </Text>
+                        )}
+                    </View>
+                    <View className="flex-row items-center gap-6 ml-4">
+                        <Scissors color="#FFFFFF" size={20} />
+                        <Share color="#FFFFFF" size={20} />
+                    </View>
+                </View>
+
+                {/* Top Blue Card */}
+                <View className="bg-[#A2D5F2] rounded-3xl p-5 mb-5 shadow-sm">
+                    <View className="flex-row justify-between items-start mb-6">
+                        <View className="flex-row items-baseline">
+                            <Text className="text-[44px] font-medium text-[#1A2831] tracking-tighter" style={{ fontVariant: ['tabular-nums'] }}>{time.h}</Text>
+                            <Text className="text-[18px] font-semibold text-[#1A2831] mr-2 ml-0.5">h</Text>
+                            <Text className="text-[44px] font-medium text-[#1A2831] tracking-tighter" style={{ fontVariant: ['tabular-nums'] }}>{time.m.toString().padStart(2, "0")}</Text>
+                            <Text className="text-[18px] font-semibold text-[#1A2831] mr-2 ml-0.5">m</Text>
+                            <Text className="text-[44px] font-medium text-[#1A2831] tracking-tighter" style={{ fontVariant: ['tabular-nums'] }}>{time.s.toString().padStart(2, "0")}</Text>
+                            <Text className="text-[18px] font-semibold text-[#1A2831] ml-0.5">s</Text>
+                        </View>
+                        <View className="bg-[#1A2831]/10 px-3 py-1.5 rounded-full flex-row items-center gap-1.5 mt-2">
+                            <View className={`w-2 h-2 rounded-full ${phase === 'recording' ? 'bg-red-500 animate-pulse' : 'bg-red-500/50'}`} />
+                            <Text className="text-[#1A2831] text-[11px] font-bold tracking-widest">REC</Text>
+                        </View>
+                    </View>
+                    <View className="bg-[#1A2831]/10 rounded-xl py-2.5 px-4 self-start">
+                        <Text className="text-[#1A2831]/80 text-[13px] font-medium tracking-wide">84.96 kHz    |    32 bit</Text>
+                    </View>
+                </View>
+
+                {/* Waveform Section */}
+                <View className="bg-[#1C1C1E] rounded-3xl p-5 flex-1 mb-5 justify-between">
+									{/* <View className="flex-row justify-end mb-4">
+										<View className="items-end gap-1.5">
+												<Text className="text-[#8E8E93] text-[10px] font-medium">10</Text>
+												<Text className="text-[#8E8E93] text-[10px] font-medium">20</Text>
+												<Text className="text-[#8E8E93] text-[10px] font-medium">0</Text>
+												<Text className="text-[#8E8E93] text-[10px] font-medium">-10</Text>
+												<Text className="text-[#8E8E93] text-[10px] font-medium">-20</Text>
+										</View>
+									</View> */}
+                    
+									{/* Simulated Waveform Visualization */}
+									<View className="flex-row items-center justify-center gap-[3px] h-28 mb-3 relative overflow-hidden">
+										{waveform.map((val, i) => (
+												<View 
+														key={i} 
+														className={`w-1 rounded-full ${phase === 'preview' ? 'bg-[#9FD4F4]' : 'bg-[#8E8E93]'}`} 
+														style={{ height: val }} 
+												/>
+										))}
+										{/* Red center timeline */}
+										<View className="absolute z-10 w-[2px] h-full bg-[#DE4045] rounded-full" style={{ left: '50%' }} />
+										<View className="absolute z-10 w-1.5 h-1.5 bg-[#DE4045] rounded-full top-0" style={{ left: 'calc(50% - 2px)' }} />
+										<View className="absolute z-10 w-1.5 h-1.5 bg-[#DE4045] rounded-full bottom-0" style={{ left: 'calc(50% - 2px)' }} />
+									</View>
+
+                    <View className="flex-row items-center justify-between px-2 mb-8">
+                        <Text className="text-[#8E8E93] text-[10px] font-medium">00:00</Text>
+                        <Text className="text-[#8E8E93] text-[10px]">|</Text>
+                        <Text className="text-[#8E8E93] text-[10px]">|</Text>
+                        <Text className="text-[#8E8E93] text-[10px] font-medium">00:15</Text>
+                        <Text className="text-[#8E8E93] text-[10px]">|</Text>
+                        <Text className="text-[#8E8E93] text-[10px]">|</Text>
+                        <Text className="text-[#8E8E93] text-[10px] font-medium">00:30</Text>
+                    </View>
+
+                    {/* Toolbar Icons */}
+                    {/* <View className="flex-row items-center justify-center gap-6">
+                        <View className="bg-[#2C2C2E] p-3.5 rounded-2xl"><AudioWaveform color="#FFFFFF" size={20} /></View>
+                        <View className="bg-[#2C2C2E] p-3.5 rounded-2xl"><Maximize color="#FFFFFF" size={20} /></View>
+                        <View className="bg-[#2C2C2E] p-3.5 rounded-2xl"><Sun color="#FFFFFF" size={20} /></View>
+                        <View className="bg-[#2C2C2E] p-3.5 rounded-2xl"><Mic color="#FFFFFF" size={20} /></View>
+                    </View> */}
+                </View>
+
+                {/* Bottom Controls */}
+                <View className="flex-row items-center justify-between px-3 mb-3">
+                    <Lock color="#8E8E93" size={18} />
+                    <Info color="#8E8E93" size={18} />
+                </View>
+
+                <View className="bg-[#1C1C1E] rounded-[48px] p-2.5 flex-row items-center mb-2">
+                    {/* Left Button */}
+                    <Pressable 
+                        onPress={leftBtn.onPress}
+                        disabled={leftBtn.disabled}
+                        className={`w-[76px] h-[76px] rounded-full items-center justify-center mr-3 ${leftBtn.disabled ? 'bg-[#121212]' : 'bg-[#2C2C2E] active:scale-95'}`}
+                    >
+                        {leftBtn.icon}
+                    </Pressable>
+                    
+                    {/* Right Button */}
+                    <Pressable 
+                        onPress={rightBtn.onPress}
+                        disabled={phase === "saving"}
+                        className={`flex-1 ${rightBtn.color} rounded-[40px] h-[76px] flex-row items-center justify-center gap-3 active:scale-[0.98]`}
+                    >
+                        {rightBtn.icon}
+                    </Pressable>
+                </View>
+                
+                <View className="flex-row items-center justify-between px-6 pb-2">
+                    <Text className="text-[#8E8E93] text-[11px] font-bold tracking-widest w-[76px] text-center ml-2">{leftBtn.text}</Text>
+                    <Text className="text-[#8E8E93] text-[11px] font-bold tracking-widest flex-1 text-center pl-6">{rightBtn.text}</Text>
+                </View>
+            </View>
+		</SafeAreaView>
 	);
 }
