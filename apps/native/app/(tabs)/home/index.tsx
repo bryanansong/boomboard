@@ -28,12 +28,13 @@ interface RecordingItemProps {
 		url: string | null;
 	};
 	isPlaying: boolean;
+	progress: number;
 	onPlay: (url: string) => void;
 	onPause: () => void;
 	index: number;
 }
 
-function RecordingItem({ recording, isPlaying, onPlay, onPause, index }: RecordingItemProps) {
+function RecordingItem({ recording, isPlaying, progress, onPlay, onPause, index }: RecordingItemProps) {
 	const handlePress = useCallback(() => {
 		if (isPlaying) {
 			onPause();
@@ -93,6 +94,16 @@ function RecordingItem({ recording, isPlaying, onPlay, onPause, index }: Recordi
 							</Text>
 						</View>
 					</View>
+
+                    {/* Playback Progress Bar */}
+                    {(isPlaying || progress > 0) && (
+                        <View className="h-1 bg-[#2C2C2E] rounded-full mt-3 overflow-hidden">
+                            <View 
+                                className="h-full bg-[#A2D5F2] rounded-full" 
+                                style={{ width: `${Math.max(0, Math.min(100, progress * 100))}%` }}
+                            />
+                        </View>
+                    )}
 				</View>
 
 				{/* Waveform indicator when playing */}
@@ -216,6 +227,11 @@ export default function SoundLibraryScreen() {
                                 recording={recording}
                                 isPlaying={
                                     playerStatus.playing && currentUrl === recording.url
+                                }
+                                progress={
+                                    currentUrl === recording.url && playerStatus.duration > 0
+                                        ? playerStatus.currentTime / playerStatus.duration
+                                        : 0
                                 }
                                 onPlay={handlePlay}
                                 onPause={handlePause}
