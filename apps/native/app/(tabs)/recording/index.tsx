@@ -10,11 +10,12 @@ import {
 } from "expo-audio";
 import { uploadAsync, FileSystemUploadType } from "expo-file-system/legacy";
 import { router } from "expo-router";
+import { useCSSVariable } from "uniwind";
 
 import { TabScreenScrollView } from "@/components/ui/tab-screen-view";
 import { useTabFocusHaptic, useHaptic } from "@/lib/hooks";
 import { api } from "@boomboard/backend/convex/_generated/api";
-import { Mic, Square, X, Check, RotateCcw } from "lucide-react-native";
+import { Mic, Square, X, Check, RotateCcw, AudioWaveform } from "lucide-react-native";
 
 type RecordingPhase = "idle" | "recording" | "saving" | "preview";
 
@@ -34,6 +35,10 @@ function formatDuration(ms: number): string {
 export default function RecordingScreen() {
 	useTabFocusHaptic();
 	const { medium, success, error } = useHaptic();
+
+	const mutedColor = (useCSSVariable("--muted") ?? "#8E8E93") as string;
+	const primaryColor = (useCSSVariable("--primary") ?? "#007AFF") as string;
+	const foregroundColor = (useCSSVariable("--foreground") ?? "#000000") as string;
 
 	const [phase, setPhase] = useState<RecordingPhase>("idle");
 	const [recordingName, setRecordingName] = useState("");
@@ -213,20 +218,46 @@ export default function RecordingScreen() {
 	// Render idle state
 	const renderIdle = () => (
 		<View className="flex-1 items-center justify-center py-50">
-			<View className="items-center justify-center w-28 h-28 rounded-full bg-primary mb-6 shadow-lg">
-				<Mic size={48} color="white" />
+			{/* Decorative rings behind mic icon */}
+			<View className="relative items-center justify-center mb-8">
+				<View
+					className="absolute w-44 h-44 rounded-full border border-primary/10 dark:border-primary/15"
+					style={{ borderCurve: "continuous" }}
+				/>
+				<View
+					className="absolute w-36 h-36 rounded-full border border-primary/15 dark:border-primary/20"
+					style={{ borderCurve: "continuous" }}
+				/>
+				<View
+					className="items-center justify-center w-28 h-28 rounded-full bg-primary"
+					style={{
+						borderCurve: "continuous",
+						boxShadow: "0 8px 32px rgba(0, 122, 255, 0.25)",
+					}}
+				>
+					<Mic size={44} color="white" strokeWidth={1.8} />
+				</View>
 			</View>
-			<Text className="mb-2 font-semibold text-[22px] text-foreground">
-				Tap to Record
+
+			<Text className="mb-2 font-bold text-[24px] text-foreground tracking-tight">
+				Ready to Record
 			</Text>
-			<Text className="px-10 text-center text-base text-muted leading-[22px]">
-				Capture a new sound for your library. Press the button below to start.
+			<Text className="px-12 text-center text-[15px] text-muted leading-[22px]">
+				Capture a new sound for your library. Tap below to begin.
 			</Text>
+
 			<Pressable
 				onPress={handleStartRecording}
-				className="mt-8 px-8 py-4 bg-primary rounded-full active:opacity-80"
+				className="mt-10 px-10 py-4 bg-primary rounded-full active:scale-[0.97]"
+				style={{
+					borderCurve: "continuous",
+					boxShadow: "0 4px 16px rgba(0, 122, 255, 0.3)",
+				}}
 			>
-				<Text className="text-white font-semibold text-lg">Start Recording</Text>
+				<View className="flex-row items-center gap-2.5">
+					<Mic size={20} color="white" strokeWidth={2} />
+					<Text className="text-white font-semibold text-[17px]">Start Recording</Text>
+				</View>
 			</Pressable>
 		</View>
 	);
@@ -234,36 +265,67 @@ export default function RecordingScreen() {
 	// Render recording state with timer and controls
 	const renderRecording = () => (
 		<View className="flex-1 items-center justify-center py-50">
-			{/* Recording indicator pulse */}
-			<View className="relative mb-8">
-				<View className="absolute inset-0 bg-red-500 rounded-full opacity-20 scale-150 animate-pulse" />
-				<View className="items-center justify-center w-28 h-28 rounded-full bg-red-500 shadow-lg">
-					<View className="w-4 h-4 rounded-full bg-white" />
+			{/* Recording indicator with pulsing rings */}
+			<View className="relative items-center justify-center mb-10">
+				<View
+					className="absolute w-44 h-44 rounded-full bg-red-500/5 dark:bg-red-500/10 animate-pulse"
+					style={{ borderCurve: "continuous" }}
+				/>
+				<View
+					className="absolute w-36 h-36 rounded-full bg-red-500/10 dark:bg-red-500/15 animate-pulse"
+					style={{ borderCurve: "continuous" }}
+				/>
+				<View
+					className="items-center justify-center w-28 h-28 rounded-full bg-red-500"
+					style={{
+						borderCurve: "continuous",
+						boxShadow: "0 8px 32px rgba(239, 68, 68, 0.35)",
+					}}
+				>
+					{/* Minimal recording dot */}
+					<View
+						className="w-8 h-8 rounded-lg bg-white animate-pulse"
+						style={{ borderCurve: "continuous" }}
+					/>
 				</View>
 			</View>
 
 			{/* Timer display */}
-			<Text className="text-5xl font-bold text-foreground mb-2 font-mono">
+			<Text
+				className="text-[52px] font-bold text-foreground mb-2 tracking-tight"
+				style={{ fontVariant: ["tabular-nums"] }}
+			>
 				{formatDuration(elapsedTime)}
 			</Text>
-			<Text className="text-base text-muted mb-10">Recording...</Text>
+			<View className="flex-row items-center gap-2 mb-12">
+				<View className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+				<Text className="text-[15px] text-muted font-medium">Recording</Text>
+			</View>
 
 			{/* Recording controls */}
-			<View className="flex-row items-center gap-6">
+			<View className="flex-row items-center gap-8">
 				{/* Cancel button */}
 				<Pressable
 					onPress={handleCancelRecording}
-					className="items-center justify-center w-16 h-16 rounded-full bg-surface border border-border active:opacity-70"
+					className="items-center justify-center w-16 h-16 rounded-full bg-zinc-100 dark:bg-zinc-800 border border-border/40 dark:border-zinc-700/50 active:scale-[0.93]"
+					style={{
+						borderCurve: "continuous",
+						boxShadow: "0 1px 3px rgba(0, 0, 0, 0.06)",
+					}}
 				>
-					<X size={24} color="var(--color-foreground)" />
+					<X size={22} color={foregroundColor} strokeWidth={2} />
 				</Pressable>
 
 				{/* Stop/Save button */}
 				<Pressable
 					onPress={handleStopRecording}
-					className="items-center justify-center w-20 h-20 rounded-full bg-primary active:opacity-80 shadow-lg"
+					className="items-center justify-center w-20 h-20 rounded-full bg-primary active:scale-[0.93]"
+					style={{
+						borderCurve: "continuous",
+						boxShadow: "0 6px 24px rgba(0, 122, 255, 0.35)",
+					}}
 				>
-					<Square size={28} color="white" fill="white" />
+					<Square size={26} color="white" fill="white" />
 				</Pressable>
 			</View>
 		</View>
@@ -272,36 +334,65 @@ export default function RecordingScreen() {
 	// Render preview state (after recording, before saving)
 	const renderPreview = () => (
 		<View className="flex-1 items-center justify-center py-50">
-			<View className="items-center justify-center w-24 h-24 rounded-full bg-surface mb-6 border-2 border-primary">
-				<Check size={40} color="var(--color-primary)" />
+			{/* Success indicator */}
+			<View className="relative items-center justify-center mb-8">
+				<View
+					className="absolute w-36 h-36 rounded-full bg-primary/5 dark:bg-primary/10"
+					style={{ borderCurve: "continuous" }}
+				/>
+				<View
+					className="items-center justify-center w-24 h-24 rounded-full bg-zinc-100/80 dark:bg-zinc-800/80 border-2 border-primary/60 dark:border-primary/50"
+					style={{
+						borderCurve: "continuous",
+						boxShadow: "0 2px 12px rgba(0, 122, 255, 0.12)",
+					}}
+				>
+					<Check size={36} color={primaryColor} strokeWidth={2.5} />
+				</View>
 			</View>
 
-			<Text className="mb-2 font-semibold text-[22px] text-foreground">
+			<Text className="mb-2 font-bold text-[24px] text-foreground tracking-tight">
 				Recording Complete
 			</Text>
-			<Text className="text-base text-muted mb-2">
-				Duration: {formatDuration(elapsedTime)}
-			</Text>
+
+			{/* Duration badge */}
+			<View
+				className="flex-row items-center gap-2 px-4 py-2 bg-zinc-100/80 dark:bg-zinc-800/80 rounded-full border border-border/30 dark:border-zinc-700/50 mb-2"
+				style={{ borderCurve: "continuous" }}
+			>
+				<AudioWaveform size={14} color={mutedColor} strokeWidth={2} />
+				<Text className="text-[15px] text-muted font-medium" style={{ fontVariant: ["tabular-nums"] }}>
+					{formatDuration(elapsedTime)}
+				</Text>
+			</View>
 
 			{/* Action buttons */}
 			<View className="flex-row items-center gap-4 mt-8">
 				<Pressable
 					onPress={handleCancelRecording}
-					className="items-center justify-center px-6 py-3 rounded-full bg-surface border border-border active:opacity-70"
+					className="items-center justify-center px-6 py-3.5 rounded-full bg-zinc-100 dark:bg-zinc-800 border border-border/40 dark:border-zinc-700/50 active:scale-[0.97]"
+					style={{
+						borderCurve: "continuous",
+						boxShadow: "0 1px 3px rgba(0, 0, 0, 0.06)",
+					}}
 				>
 					<View className="flex-row items-center gap-2">
-						<RotateCcw size={18} color="var(--color-foreground)" />
-						<Text className="text-foreground font-medium">Retake</Text>
+						<RotateCcw size={16} color={foregroundColor} strokeWidth={2} />
+						<Text className="text-foreground font-semibold text-[15px]">Retake</Text>
 					</View>
 				</Pressable>
 
 				<Pressable
 					onPress={handleSaveRecording}
-					className="items-center justify-center px-8 py-3 rounded-full bg-primary active:opacity-80 shadow-lg"
+					className="items-center justify-center px-8 py-3.5 rounded-full bg-primary active:scale-[0.97]"
+					style={{
+						borderCurve: "continuous",
+						boxShadow: "0 4px 16px rgba(0, 122, 255, 0.3)",
+					}}
 				>
 					<View className="flex-row items-center gap-2">
-						<Check size={18} color="white" />
-						<Text className="text-white font-semibold">Save</Text>
+						<Check size={16} color="white" strokeWidth={2.5} />
+						<Text className="text-white font-semibold text-[15px]">Save</Text>
 					</View>
 				</Pressable>
 			</View>
@@ -311,11 +402,18 @@ export default function RecordingScreen() {
 	// Render saving state
 	const renderSaving = () => (
 		<View className="flex-1 items-center justify-center py-50">
-			<ActivityIndicator size="large" color="var(--color-primary)" className="mb-6" />
-			<Text className="mb-2 font-semibold text-[22px] text-foreground">
+			{/* Animated upload indicator */}
+			<View className="relative items-center justify-center mb-8">
+				<View
+					className="absolute w-28 h-28 rounded-full border-2 border-primary/20 dark:border-primary/30 animate-pulse"
+					style={{ borderCurve: "continuous" }}
+				/>
+				<ActivityIndicator size="large" color={primaryColor} />
+			</View>
+			<Text className="mb-2 font-bold text-[22px] text-foreground tracking-tight">
 				Saving...
 			</Text>
-			<Text className="px-10 text-center text-base text-muted">
+			<Text className="px-12 text-center text-[15px] text-muted leading-[22px]">
 				Uploading your recording to the cloud. This may take a moment.
 			</Text>
 		</View>
