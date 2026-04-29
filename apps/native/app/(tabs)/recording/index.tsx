@@ -14,8 +14,9 @@ import { router } from "expo-router";
 import { useTabFocusHaptic, useHaptic } from "@/lib/hooks";
 import { api } from "@boomboard/backend/convex/_generated/api";
 import { Mic, Square, X, Check, RotateCcw, AudioWaveform, Maximize, Sun, ChevronLeft, Scissors, Share, Lock, Info } from "lucide-react-native";
+import { useToast } from "heroui-native";
 
-type RecordingPhase = "idle" | "recording" | "saving" | "preview";
+type RecordingPhase = "idle" | "recording" | "paused" | "saving" | "preview";
 
 // Helper for formatting duration to match the image "0h 00m 40s"
 function formatDurationDetailed(ms: number) {
@@ -29,11 +30,13 @@ function formatDurationDetailed(ms: number) {
 export default function RecordingScreen() {
 	useTabFocusHaptic();
 	const { medium, success, error } = useHaptic();
+	const { toast } = useToast();
 
 	const [phase, setPhase] = useState<RecordingPhase>("idle");
 	const [recordingName, setRecordingName] = useState("");
 	const [lastRecordingUri, setLastRecordingUri] = useState<string | null>(null);
-	const recordingStartTimeRef = useRef<number>(0);
+	const accumulatedTimeRef = useRef<number>(0);
+	const lastTickTimeRef = useRef<number>(0);
 	const [elapsedTime, setElapsedTime] = useState(0);
 	const timerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -52,8 +55,14 @@ export default function RecordingScreen() {
 	// Timer effect for recording duration and simulated waveform
 	useEffect(() => {
 		if (phase === "recording") {
+			lastTickTimeRef.current = Date.now();
 			timerIntervalRef.current = setInterval(() => {
-				setElapsedTime(Date.now() - recordingStartTimeRef.current);
+				const now = Date.now();
+				const delta = now - lastTickTimeRef.current;
+				lastTickTimeRef.current = now;
+				accumulatedTimeRef.current += delta;
+				setElapsedTime(accumulatedTimeRef.current);
+
 				setWaveform((prev) => {
 					// Simulate active audio waveform metering
 					const newWave = [...prev.slice(1), Math.random() * 35 + 10];
@@ -65,9 +74,11 @@ export default function RecordingScreen() {
 				clearInterval(timerIntervalRef.current);
 				timerIntervalRef.current = null;
 			}
-			// Reset waveform if not in preview
+			// Reset waveform if not in preview or paused
 			if (phase === "idle") {
 				setWaveform(Array(40).fill(10));
+				accumulatedTimeRef.current = 0;
+				setElapsedTime(0);
 			}
 		}
 
@@ -106,7 +117,7 @@ export default function RecordingScreen() {
 			medium();
 			await recorder.prepareToRecordAsync();
 			recorder.record();
-			recordingStartTimeRef.current = Date.now();
+			accumulatedTimeRef.current = 0;
 			setElapsedTime(0);
 			setPhase("recording");
 		} catch (err) {
@@ -114,6 +125,26 @@ export default function RecordingScreen() {
 			Alert.alert("Error", "Failed to start recording. Please try again.");
 		}
 	}, [ensurePermissions, recorder, medium]);
+
+	const handlePauseRecording = useCallback(() => {
+		try {
+			recorder.pause();
+			medium();
+			setPhase("paused");
+		} catch (err) {
+			console.error("Failed to pause recording:", err);
+		}
+	}, [recorder, medium]);
+
+	const handleResumeRecording = useCallback(() => {
+		try {
+			recorder.record();
+			medium();
+			setPhase("recording");
+		} catch (err) {
+			console.error("Failed to resume recording:", err);
+		}
+	}, [recorder, medium]);
 
 	const handleStopRecording = useCallback(async () => {
 		try {
@@ -135,10 +166,11 @@ export default function RecordingScreen() {
 	}, [recorder, medium]);
 
 	const handleCancelRecording = useCallback(() => {
-		if (phase === "recording") {
+		if (phase === "recording" || phase === "paused") {
 			recorder.stop().catch(() => {});
 		}
 		setPhase("idle");
+		accumulatedTimeRef.current = 0;
 		setElapsedTime(0);
 		setLastRecordingUri(null);
 		setRecordingName("");
@@ -178,14 +210,12 @@ export default function RecordingScreen() {
 			});
 
 			success();
-			Alert.alert("Success", "Your recording has been saved to your library!", [
-				{
-					text: "OK",
-					onPress: () => {
-						router.push("/(tabs)/home" as never);
-					},
-				},
-			]);
+			toast.show({
+				variant: "success",
+				label: "Saved!",
+				description: "Your recording has been added to your library.",
+			});
+			router.push("/(tabs)/home" as never);
 
 			setPhase("idle");
 			setElapsedTime(0);
@@ -208,7 +238,7 @@ export default function RecordingScreen() {
 	// Button configuration logic
 	const getLeftButton = () => {
 		if (phase === "idle") return { icon: <Square size={20} color="#8E8E93" fill="#8E8E93" />, text: "STOP", disabled: true, onPress: () => {} };
-		if (phase === "recording") return { icon: <Square size={20} color="#FFFFFF" fill="#FFFFFF" />, text: "STOP", disabled: false, onPress: handleStopRecording };
+		if (phase === "recording" || phase === "paused") return { icon: <Square size={20} color="#FFFFFF" fill="#FFFFFF" />, text: "STOP", disabled: false, onPress: handleStopRecording };
 		if (phase === "preview") return { icon: <RotateCcw size={20} color="#FFFFFF" />, text: "RETAKE", disabled: false, onPress: handleCancelRecording };
 		if (phase === "saving") return { icon: <Square size={20} color="#8E8E93" fill="#8E8E93" />, text: "STOP", disabled: true, onPress: () => {} };
 		return { icon: <Square size={20} color="#8E8E93" fill="#8E8E93" />, text: "", disabled: true, onPress: () => {} };
@@ -223,10 +253,11 @@ export default function RecordingScreen() {
                     <View className="w-1.5 h-4 bg-[#DE4045] rounded-sm" />
                 </View>
             ), 
-            text: "REC / PAUSE", 
+            text: "PAUSE", 
             color: "bg-transparent border-2 border-[#DE4045]", 
-            onPress: handleCancelRecording // Functionally cancel, visually looks like pause/rec
+            onPress: handlePauseRecording
         };
+		if (phase === "paused") return { icon: <View className="w-4 h-4 bg-[#DE4045] rounded-full" />, text: "RESUME", color: "bg-transparent border-2 border-[#DE4045]", onPress: handleResumeRecording };
 		if (phase === "preview") return { icon: <Check size={20} color="#9FD4F4" />, text: "SAVE", color: "bg-transparent border-2 border-[#9FD4F4]", onPress: handleSaveRecording };
 		if (phase === "saving") return { icon: <ActivityIndicator color="#9FD4F4" />, text: "SAVING...", color: "bg-transparent border-2 border-[#9FD4F4]", onPress: () => {} };
 		return { icon: null, text: "", color: "", onPress: () => {} };
@@ -260,10 +291,6 @@ export default function RecordingScreen() {
                             </Text>
                         )}
                     </View>
-                    <View className="flex-row items-center gap-6 ml-4">
-                        <Scissors color="#FFFFFF" size={20} />
-                        <Share color="#FFFFFF" size={20} />
-                    </View>
                 </View>
 
                 {/* Top Blue Card */}
@@ -278,12 +305,9 @@ export default function RecordingScreen() {
                             <Text className="text-[18px] font-semibold text-[#1A2831] ml-0.5">s</Text>
                         </View>
                         <View className="bg-[#1A2831]/10 px-3 py-1.5 rounded-full flex-row items-center gap-1.5 mt-2">
-                            <View className={`w-2 h-2 rounded-full ${phase === 'recording' ? 'bg-red-500 animate-pulse' : 'bg-red-500/50'}`} />
-                            <Text className="text-[#1A2831] text-[11px] font-bold tracking-widest">REC</Text>
+                            <View className={`w-2 h-2 rounded-full ${phase === 'recording' ? 'bg-red-500 animate-pulse' : (phase === 'paused' ? 'bg-red-500' : 'bg-red-500/50')}`} />
+                            <Text className="text-[#1A2831] text-[11px] font-bold tracking-widest">{phase === 'paused' ? 'PAUSED' : 'REC'}</Text>
                         </View>
-                    </View>
-                    <View className="bg-[#1A2831]/10 rounded-xl py-2.5 px-4 self-start">
-                        <Text className="text-[#1A2831]/80 text-[13px] font-medium tracking-wide">84.96 kHz    |    32 bit</Text>
                     </View>
                 </View>
 
@@ -314,7 +338,7 @@ export default function RecordingScreen() {
 										<View className="absolute z-10 w-1.5 h-1.5 bg-[#DE4045] rounded-full bottom-0" style={{ left: 'calc(50% - 2px)' }} />
 									</View>
 
-                    <View className="flex-row items-center justify-between px-2 mb-8">
+                    <View className="flex-row items-center justify-between px-2 mb-2">
                         <Text className="text-[#8E8E93] text-[10px] font-medium">00:00</Text>
                         <Text className="text-[#8E8E93] text-[10px]">|</Text>
                         <Text className="text-[#8E8E93] text-[10px]">|</Text>
@@ -323,22 +347,9 @@ export default function RecordingScreen() {
                         <Text className="text-[#8E8E93] text-[10px]">|</Text>
                         <Text className="text-[#8E8E93] text-[10px] font-medium">00:30</Text>
                     </View>
-
-                    {/* Toolbar Icons */}
-                    {/* <View className="flex-row items-center justify-center gap-6">
-                        <View className="bg-[#2C2C2E] p-3.5 rounded-2xl"><AudioWaveform color="#FFFFFF" size={20} /></View>
-                        <View className="bg-[#2C2C2E] p-3.5 rounded-2xl"><Maximize color="#FFFFFF" size={20} /></View>
-                        <View className="bg-[#2C2C2E] p-3.5 rounded-2xl"><Sun color="#FFFFFF" size={20} /></View>
-                        <View className="bg-[#2C2C2E] p-3.5 rounded-2xl"><Mic color="#FFFFFF" size={20} /></View>
-                    </View> */}
                 </View>
 
                 {/* Bottom Controls */}
-                <View className="flex-row items-center justify-between px-3 mb-3">
-                    <Lock color="#8E8E93" size={18} />
-                    <Info color="#8E8E93" size={18} />
-                </View>
-
                 <View className="bg-[#1C1C1E] rounded-[48px] p-2.5 flex-row items-center mb-2">
                     {/* Left Button */}
                     <Pressable 

@@ -166,14 +166,6 @@ export default function SoundLibraryScreen() {
 						My Sounds
 					</Text>
 				</View>
-				<View className="flex-row items-center gap-3">
-                    <Pressable className="w-10 h-10 rounded-full bg-[#1C1C1E] items-center justify-center">
-                        <Search size={18} color="#8E8E93" />
-                    </Pressable>
-                    <Pressable className="w-10 h-10 rounded-full bg-[#1C1C1E] items-center justify-center">
-                        <SlidersHorizontal size={18} color="#8E8E93" />
-                    </Pressable>
-				</View>
 			</View>
 
             <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
@@ -183,12 +175,6 @@ export default function SoundLibraryScreen() {
                         <Text className="text-[#8E8E93] text-[14px] font-medium">
                             {recordings.length} {recordings.length === 1 ? 'Recording' : 'Recordings'}
                         </Text>
-                        <View className="flex-row items-center gap-2">
-                            <Text className="text-[#A2D5F2] text-[13px] font-semibold">Date</Text>
-                            <View className="w-4 h-4 rounded-full bg-[#2C2C2E] items-center justify-center">
-                                <Text className="text-[#8E8E93] text-[8px] font-bold">▼</Text>
-                            </View>
-                        </View>
                     </View>
                 )}
 
