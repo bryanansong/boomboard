@@ -31,6 +31,12 @@ function toQuestionSlug(text: string): string {
 const quizQuestions: QuizQuestion[] = [
 	{
 		id: 1,
+		question: 'Have you enabled "Host Microphone" for your virtual device?',
+		type: "choice",
+		options: ["Yes", "No"],
+	},
+	{
+		id: 2,
 		question: "Which best describes you?",
 		type: "choice",
 		options: [
@@ -41,7 +47,7 @@ const quizQuestions: QuizQuestion[] = [
 		],
 	},
 	{
-		id: 2,
+		id: 3,
 		question: "What kinds of sounds do you want in your library?",
 		type: "choice",
 		options: [
@@ -52,7 +58,7 @@ const quizQuestions: QuizQuestion[] = [
 		],
 	},
 	{
-		id: 3,
+		id: 4,
 		question: "When do you most want one-tap sounds?",
 		type: "choice",
 		options: [
@@ -63,7 +69,7 @@ const quizQuestions: QuizQuestion[] = [
 		],
 	},
 	{
-		id: 4,
+		id: 5,
 		question: "How did you hear about Boomboard?",
 		type: "choice",
 		options: ["TikTok", "Instagram", "YouTube", "Friend", "App Store search", "Other"],
